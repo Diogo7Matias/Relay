@@ -14,7 +14,7 @@ public class ChatClient {
     private static final String HOST = "localhost";
     private static final int PORT = 5000;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         try (
             Socket socket = new Socket(HOST, PORT);
             BufferedReader serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -24,11 +24,15 @@ public class ChatClient {
             System.out.println("Connected to server. Type a message and press Enter.");
             
             String line;
+            System.out.print("[YOU] > ");
             while ((line = userIn.readLine()) != null) {
                 serverOut.println(line);
                 String response = serverIn.readLine();
                 System.out.println(response);
+                System.out.print("[YOU] > ");
             }
+        } catch (IOException e) {
+            System.err.println("Could not connect to server.\n" + e.getMessage());
         }
     }
 }
