@@ -23,14 +23,25 @@ public class ChatClient {
         ) {
             System.out.println("Connected to server. Type a message and press Enter.");
             
+            // handle the reception of messages from the server
+            Thread receiverThread = new Thread(() -> {
+                String response;
+                try {
+                    while ((response = serverIn.readLine()) != null) {
+                        System.out.println(response);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Failed to fetch message from server.\n" + e.getMessage());
+                }
+            });
+            receiverThread.start();
+            
             String line;
-            System.out.print("[YOU] > ");
-            while ((line = userIn.readLine()) != null) {
-                serverOut.println(line);
-                String response = serverIn.readLine();
-                System.out.println(response);
+            do { 
                 System.out.print("[YOU] > ");
-            }
+                if ((line = userIn.readLine()) == null) break;
+                serverOut.println(line);
+            } while (true);
         } catch (IOException e) {
             System.err.println("Could not connect to server.\n" + e.getMessage());
         }
