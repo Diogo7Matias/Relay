@@ -21,7 +21,7 @@ public class ChatServer {
             // spawn a thread per client 
             while (clientCount < MAX_CLIENTS) {
                 Socket clientSocket = serverSocket.accept();
-                ClientHandler handler = new ClientHandler(clientSocket, room, new String("User" + clientCount.toString()));
+                ClientHandler handler = new ClientHandler(clientSocket, room, "User" + clientCount.toString());
                 room.addHandler(handler);
 
                 Thread thread = new Thread(handler);

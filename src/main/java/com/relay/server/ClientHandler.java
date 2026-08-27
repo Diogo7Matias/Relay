@@ -35,7 +35,7 @@ public class ClientHandler implements Runnable {
             out.close();
         } catch (IOException e) {
             System.err.println(e.getMessage());
-            out.close();
+            if (out != null) out.close();
         }
         System.out.println("Client disconnected.");
     }
