@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.Instant;
+
+import com.relay.protocol.Message;
 
 public class ClientHandler implements Runnable {
     private final ChatRoom room;
@@ -29,8 +32,10 @@ public class ClientHandler implements Runnable {
             // readLine returns null when the client closes the connection
             while ((line = in.readLine()) != null) {
                 System.out.println("Received: " + line);
-                room.updateChatLog(line);
-                room.broadcast(line, this);
+
+                Message message = new Message(this.name, line, Instant.now());
+                room.updateChatLog(message);
+                room.broadcast(message);
             }
             out.close();
         } catch (IOException e) {
@@ -43,12 +48,10 @@ public class ClientHandler implements Runnable {
     /**
      * Sends a message to the client associated with this handler.
      * 
-     * @param message
-     * @throws IOException
+     * @param jsonStr the message in JSON format
      */
-    public void sendMessage(String message, String sender) throws IOException {
-        this.out.print("[" + sender + "]" + " > ");
-        this.out.println(message);
+    public void sendMessage(String jsonStr) {
+        this.out.println(jsonStr);
     }
 
     public String getName() {

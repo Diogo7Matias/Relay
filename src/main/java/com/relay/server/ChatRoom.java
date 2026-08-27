@@ -1,7 +1,13 @@
 package com.relay.server;
 
-import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.relay.protocol.Message;
+import com.relay.protocol.MessageAdapter;
+import static com.relay.server.exceptions.ErrorMessage.USER_NAME_INVALID;
+import com.relay.server.exceptions.RelayException;
 
 public class ChatRoom {
 
@@ -19,28 +25,42 @@ public class ChatRoom {
      * when I introduce a database.
      * This too needs to be thread-safe.
      */
-    private final CopyOnWriteArrayList<String> chatLog = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Message> chatLog = new CopyOnWriteArrayList<>();
     
+    /**
+     * An instance of Gson, used to serialize/deserialize messages.
+     */
+    private static final Gson gson = new GsonBuilder()
+                                        .registerTypeAdapter(Message.class, new MessageAdapter())
+                                        .create();
+
     public void addHandler(ClientHandler handler) {
+        isNameUnique(handler.getName());
         this.handlers.add(handler);
     }
 
-    public void broadcast(String message, ClientHandler sender) {
+    public void broadcast(Message message) {
         for (ClientHandler h : handlers) {
-            if (h == sender) continue;
-            try {
-                h.sendMessage(message, sender.getName());
-            } catch (IOException e) {
-                System.err.println("Failed to send message.\n" + e.getMessage());
+            if (!h.getName().equals(message.getSender())) {
+                String json = gson.toJson(message);
+                h.sendMessage(json);
             }
         }
     }
 
-    public void updateChatLog(String message) {
+    public void updateChatLog(Message message) {
         this.chatLog.add(message);
     }
 
     public void printLog() {
         System.out.println(chatLog.toString());
+    }
+
+    private void isNameUnique(String name) {
+        for (ClientHandler h : handlers) {
+            if (h.getName().equals(name)) {
+                throw new RelayException(USER_NAME_INVALID);
+            }
+        }
     }
 }

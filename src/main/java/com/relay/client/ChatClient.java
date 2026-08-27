@@ -6,6 +6,11 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.relay.protocol.Message;
+import com.relay.protocol.MessageAdapter;
+
 /**
  * Connect to the server, send messages on stdin,
  * print whatever comes back.
@@ -13,6 +18,9 @@ import java.net.Socket;
 public class ChatClient {
     private static final String HOST = "localhost";
     private static final int PORT = 5000;
+    private static final Gson gson = new GsonBuilder()
+                                        .registerTypeAdapter(Message.class, new MessageAdapter())
+                                        .create();
 
     public static void main(String[] args) {
         try (
@@ -25,9 +33,10 @@ public class ChatClient {
             
             // handle the reception of messages from the server
             Thread receiverThread = new Thread(() -> {
-                String response;
+                String jsonLine;
                 try {
-                    while ((response = serverIn.readLine()) != null) {
+                    while ((jsonLine = serverIn.readLine()) != null) {
+                        Message response = gson.fromJson(jsonLine, Message.class);
                         System.out.println(response);
                     }
                 } catch (IOException e) {
