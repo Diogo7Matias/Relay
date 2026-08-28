@@ -1,58 +1,46 @@
 package com.relay.client;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.relay.protocol.Message;
-import com.relay.protocol.MessageAdapter;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 /**
- * Connect to the server, send messages on stdin,
- * print whatever comes back.
+ * The entry-point class for the client app.
+ * 
+ * Responsible for initializing the networking thread that handles the 
+ * connection to the server and bootstrapping the application UI.
  */
-public class ChatClient {
-    private static final String HOST = "localhost";
-    private static final int PORT = 5000;
-    private static final Gson gson = new GsonBuilder()
-                                        .registerTypeAdapter(Message.class, new MessageAdapter())
-                                        .create();
+public class ChatClient extends Application {
+    private final double SCENE_WIDTH = 1200;
+    private final double SCENE_HEIGHT = 900;
+
+    @Override
+    public void start(Stage stage) throws IOException {
+        ServerConnection connection = new ServerConnection();
+        Thread netThread = new Thread(connection);
+        netThread.start();
+        
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("chat.fxml"));
+        Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
+        ChatController controller = loader.getController();
+        
+        controller.setServerConnection(connection);
+        connection.setOnMessageReceived(
+            msg -> Platform.runLater(
+                () -> controller.updateChatHistory(msg)
+            )
+        );
+
+        stage.setTitle("Relay Client");
+        stage.setScene(scene);
+        stage.show();
+    }
 
     public static void main(String[] args) {
-        try (
-            Socket socket = new Socket(HOST, PORT);
-            BufferedReader serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter serverOut = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader userIn = new BufferedReader(new InputStreamReader(System.in))
-        ) {
-            System.out.println("Connected to server. Type a message and press Enter.");
-            
-            // handle the reception of messages from the server
-            Thread receiverThread = new Thread(() -> {
-                String jsonLine;
-                try {
-                    while ((jsonLine = serverIn.readLine()) != null) {
-                        Message response = gson.fromJson(jsonLine, Message.class);
-                        System.out.println(response);
-                    }
-                } catch (IOException e) {
-                    System.err.println("Failed to fetch message from server.\n" + e.getMessage());
-                }
-            });
-            receiverThread.start();
-            
-            String line;
-            do { 
-                System.out.print("[YOU] > ");
-                if ((line = userIn.readLine()) == null) break;
-                serverOut.println(line);
-            } while (true);
-        } catch (IOException e) {
-            System.err.println("Could not connect to server.\n" + e.getMessage());
-        }
+        launch(args);
     }
 }

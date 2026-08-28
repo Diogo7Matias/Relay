@@ -35,13 +35,13 @@ public class ChatRoom {
                                         .create();
 
     public void addHandler(ClientHandler handler) {
-        isNameUnique(handler.getName());
+        isNameUnique(handler.getUsername());
         this.handlers.add(handler);
     }
 
     public void broadcast(Message message) {
         for (ClientHandler h : handlers) {
-            if (!h.getName().equals(message.getSender())) {
+            if (!h.getUsername().equals(message.getSender())) {
                 String json = gson.toJson(message);
                 h.sendMessage(json);
             }
@@ -58,7 +58,7 @@ public class ChatRoom {
 
     private void isNameUnique(String name) {
         for (ClientHandler h : handlers) {
-            if (h.getName().equals(name)) {
+            if (h.getUsername().equals(name)) {
                 throw new RelayException(USER_NAME_INVALID);
             }
         }

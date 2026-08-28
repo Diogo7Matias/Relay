@@ -12,13 +12,13 @@ import com.relay.protocol.Message;
 public class ClientHandler implements Runnable {
     private final ChatRoom room;
     private final Socket socket;
-    private final String name;
+    private final String username;
     private PrintWriter out;
 
-    public ClientHandler(Socket socket, ChatRoom room, String name) {
+    public ClientHandler(Socket socket, ChatRoom room, String username) {
         this.room = room;
         this.socket = socket;
-        this.name = name;
+        this.username = username;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class ClientHandler implements Runnable {
             while ((line = in.readLine()) != null) {
                 System.out.println("Received: " + line);
 
-                Message message = new Message(this.name, line, Instant.now());
+                Message message = new Message(this.username, line, Instant.now());
                 room.updateChatLog(message);
                 room.broadcast(message);
             }
@@ -54,7 +54,7 @@ public class ClientHandler implements Runnable {
         this.out.println(jsonStr);
     }
 
-    public String getName() {
-        return this.name;
+    public String getUsername() {
+        return this.username;
     }
 }
