@@ -31,9 +31,7 @@ public class ChatRoom {
 
     public void broadcast(Message message) {
         for (ClientHandler h : handlers) {
-            if (!h.getUsername().equals(message.getSender())) {
-                h.sendMessage(message);
-            }
+            h.sendMessage(message);
         }
     }
 

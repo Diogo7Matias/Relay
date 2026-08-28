@@ -3,7 +3,7 @@ package com.relay.client;
 import com.relay.protocol.Message;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 
 public class ChatController {
@@ -20,7 +20,7 @@ public class ChatController {
      * display the messages sent by all users.
     */
     @FXML
-    private TextArea historyArea;
+    private ListView<Message> historyList;
 
     /**
      * The UI element representing the user's chat input field.
@@ -30,6 +30,11 @@ public class ChatController {
     @FXML
     private TextField inputField;
 
+    @FXML
+    private void initialize() {
+        historyList.setCellFactory(listView -> new MessageCell());
+    }
+
     public void setServerConnection(ServerConnection connection) {
         this.svConnection = connection;
     }
@@ -37,7 +42,6 @@ public class ChatController {
     @FXML
     private void handleSend() {
         String text = inputField.getText();
-        historyArea.appendText("YOU > " + text + "\n");
         inputField.clear();
 
         // NOTE: the javaFX thread is the one executing this operation.
@@ -48,7 +52,6 @@ public class ChatController {
 
     @FXML
     public void updateChatHistory(Message message) {
-        historyArea.appendText(message.getSender() + " > "
-                             + message.getBody() + "\n");
+        historyList.getItems().add(message);
     }
 }
