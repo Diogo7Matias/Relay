@@ -2,10 +2,7 @@ package com.relay.server;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.relay.protocol.Message;
-import com.relay.protocol.MessageAdapter;
 import static com.relay.server.exceptions.ErrorMessage.USER_NAME_INVALID;
 import com.relay.server.exceptions.RelayException;
 
@@ -26,13 +23,6 @@ public class ChatRoom {
      * This too needs to be thread-safe.
      */
     private final CopyOnWriteArrayList<Message> chatLog = new CopyOnWriteArrayList<>();
-    
-    /**
-     * An instance of Gson, used to serialize/deserialize messages.
-     */
-    private static final Gson gson = new GsonBuilder()
-                                        .registerTypeAdapter(Message.class, new MessageAdapter())
-                                        .create();
 
     public void addHandler(ClientHandler handler) {
         isNameUnique(handler.getUsername());
@@ -42,8 +32,7 @@ public class ChatRoom {
     public void broadcast(Message message) {
         for (ClientHandler h : handlers) {
             if (!h.getUsername().equals(message.getSender())) {
-                String json = gson.toJson(message);
-                h.sendMessage(json);
+                h.sendMessage(message);
             }
         }
     }

@@ -46,9 +46,9 @@ public class ServerConnection implements Runnable {
         String jsonLine;
         try {
             while ((jsonLine = serverIn.readLine()) != null) {
-                Message response = gson.fromJson(jsonLine, Message.class);
+                Message newMessage = gson.fromJson(jsonLine, Message.class);
                 if (onMessageReceived != null) {
-                    onMessageReceived.accept(response);
+                    onMessageReceived.accept(newMessage);
                 } else {
                     System.err.println("onMessageReceived not specified.");
                 }
