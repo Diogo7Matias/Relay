@@ -34,6 +34,7 @@ public class ChatClient extends Application {
                 () -> controller.updateChatHistory(msg)
             )
         );
+        scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
 
         stage.setTitle("Relay Client");
         stage.setScene(scene);

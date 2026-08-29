@@ -2,9 +2,11 @@ package com.relay.client;
 
 import com.relay.protocol.Message;
 
-import javafx.fxml.FXML;
+import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.fxml.FXML;
 
 public class ChatController {
 
@@ -33,6 +35,11 @@ public class ChatController {
     @FXML
     private void initialize() {
         historyList.setCellFactory(listView -> new MessageCell());
+        historyList.getItems().addListener((ListChangeListener<Message>) change -> {
+            Platform.runLater(() -> {
+                historyList.scrollTo(historyList.getItems().size() - 1);
+            });
+        });
     }
 
     public void setServerConnection(ServerConnection connection) {
