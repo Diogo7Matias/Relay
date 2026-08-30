@@ -13,10 +13,13 @@ import com.relay.protocol.Message;
 import com.relay.protocol.MessageType;
 import com.relay.protocol.MessageAdapter;
 
+import com.relay.server.exceptions.RelayException;
+import static com.relay.server.exceptions.ErrorMessage.*;
+
 public class ClientHandler implements Runnable {
     private final ChatRoom room;
     private final Socket socket;
-    private final String username;
+    private String username;
 
     private PrintWriter out;
 
@@ -27,9 +30,17 @@ public class ClientHandler implements Runnable {
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
                                         .create();
 
-    public ClientHandler(Socket socket, ChatRoom room, String username) {
+    public ClientHandler(Socket socket, ChatRoom room) {
         this.room = room;
         this.socket = socket;
+    }
+
+    public String getUsername() {
+        return this.username;
+    }
+    
+    public void setUsername(String username) {
+        room.isNameUnique(username);
         this.username = username;
     }
 
@@ -68,22 +79,21 @@ public class ClientHandler implements Runnable {
         this.out.println(json);
     }
 
-    public String getUsername() {
-        return this.username;
-    }
-
     private void handleMessage(Message message) {
         MessageType type = message.getType();
         if (type == null) {
-            // TODO
+            throw new RelayException(MESSAGE_FORMAT_INVALID);
         }
 
         switch (type) {
             case MessageType.TEXT:
                 String body = message.getBody();
                 if (body == null || body.isBlank()) {
-                    // TODO
-                    break;
+                    throw new RelayException(MESSAGE_BODY_MISSING);
+                }
+                
+                if (this.username == null) { // ignore 
+                    return;
                 }
 
                 Message textMessage = new Message(this.username, message.getBody(), Instant.now());
@@ -93,10 +103,10 @@ public class ClientHandler implements Runnable {
             case MessageType.NAME_REQUEST:
                 String username = message.getBody();
                 if (username == null || username.isBlank()) {
-                    // TODO
-                    break;
+                    throw new RelayException(MESSAGE_BODY_MISSING);
                 }
-                // TODO check if name is available
+
+                setUsername(username);
                 Message ack = new Message(MessageType.ACK);
                 sendMessage(ack);
             default: // ignore

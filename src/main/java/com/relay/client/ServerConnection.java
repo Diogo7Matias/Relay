@@ -51,6 +51,7 @@ public class ServerConnection implements Runnable {
         String jsonLine;
         try {
             while ((jsonLine = serverIn.readLine()) != null) {
+                System.out.println("Received: " + jsonLine);
                 Message incomingMessage = gson.fromJson(jsonLine, Message.class);
                 handleMessage(incomingMessage);
             }
@@ -92,8 +93,8 @@ public class ServerConnection implements Runnable {
 
     private void handleMessage(Message message) {
         MessageType type = message.getType();
-        if (type == null) {
-            // TODO
+        if (type == null) { // should not happen
+            System.err.println("Invalid message format from server.");
             return;
         }
 
@@ -106,7 +107,7 @@ public class ServerConnection implements Runnable {
                 }
                 break;
             case MessageType.ACK:
-                // if (state == ...) // implement state pattern ?
+                // if (state == ...) // TODO implement state pattern ?
                 if (onUsernameChosen != null) {
                     onUsernameChosen.accept(message);
                 } else {

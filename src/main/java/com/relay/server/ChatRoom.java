@@ -25,7 +25,6 @@ public class ChatRoom {
     private final CopyOnWriteArrayList<Message> chatLog = new CopyOnWriteArrayList<>();
 
     public void addHandler(ClientHandler handler) {
-        isNameUnique(handler.getUsername());
         this.handlers.add(handler);
     }
 
@@ -43,9 +42,9 @@ public class ChatRoom {
         System.out.println(chatLog.toString());
     }
 
-    private void isNameUnique(String name) {
+    public void isNameUnique(String name) {
         for (ClientHandler h : handlers) {
-            if (h.getUsername().equals(name)) {
+            if (h.getUsername() != null && h.getUsername().equals(name)) {
                 throw new RelayException(USER_NAME_INVALID);
             }
         }

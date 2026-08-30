@@ -4,7 +4,46 @@
     -medium-grey: #1a1a1a;
     -light-grey: #2a2a2a;
     -super-light-grey: #3a3a3a;
+    -text-color: #e2e2e2;
     -highlight-color: rgba(101, 233, 123, 1);
+}
+
+* {
+    -fx-background-color: -dark-grey;
+    -fx-text-fill: -text-color;
+}
+
+/* Controls - input fields, buttons, etc... */
+
+.button {
+    -fx-background-color: -dark-grey;
+    -fx-padding: 8px 16px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.input-field {
+    -fx-background-color: -dark-grey;
+    -fx-padding: 8px;
+}
+
+/* Log in Screen */
+
+.login-container .label {
+    -fx-font-size: 20px;
+}
+
+.login-container .input-field {
+    -fx-font-size: 16px;
+    -fx-border-color: -medium-grey;
+    -fx-border-width: 2px;
+    -fx-border-radius: 4px;
+}
+
+.login-container .button {
+    -fx-background-color: -highlight-color;
+    -fx-text-fill: -dark-grey;
+    -fx-font-weight: bold;
 }
 
 /* Chat History Section (Center of the screen) */
@@ -26,6 +65,10 @@
     -fx-background-radius: 4px;
 }
 
+.message-container * {
+    -fx-background-color: -medium-dark-grey;
+}
+
 .message-header {
     -fx-spacing: 10px;
     -fx-alignment: baseline-left;
@@ -44,7 +87,6 @@
 }
 
 .message-body {
-    -fx-text-fill: white;
     -fx-font-size: 16px;
 }
 
@@ -86,15 +128,6 @@
     -fx-spacing: 10px;
 }
 
-.input-field {
-    -fx-background-color: -dark-grey;
-    -fx-text-fill: white;
+.input-container .input-field {
     -fx-padding: 8px 16px;
-}
-
-.button {
-    -fx-background-color: -dark-grey;
-    -fx-padding: 8px 16px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
 }
