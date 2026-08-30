@@ -10,6 +10,7 @@ import java.time.Instant;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.relay.protocol.Message;
+import com.relay.protocol.MessageType;
 import com.relay.protocol.MessageAdapter;
 
 public class ClientHandler implements Runnable {
@@ -38,15 +39,13 @@ public class ClientHandler implements Runnable {
             BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
         ) {
             this.out = new PrintWriter(this.socket.getOutputStream(), true);
-            String line;
+            String jsonLine;
 
             // readLine returns null when the client closes the connection
-            while ((line = in.readLine()) != null) {
-                System.out.println("Received: " + line);
-
-                Message message = new Message(this.username, line, Instant.now());
-                room.updateChatLog(message);
-                room.broadcast(message);
+            while ((jsonLine = in.readLine()) != null) {
+                System.out.println("Received: " + jsonLine);
+                Message message = gson.fromJson(jsonLine, Message.class);
+                handleMessage(message);
             }
             out.close();
         } catch (IOException e) {
@@ -71,5 +70,37 @@ public class ClientHandler implements Runnable {
 
     public String getUsername() {
         return this.username;
+    }
+
+    private void handleMessage(Message message) {
+        MessageType type = message.getType();
+        if (type == null) {
+            // TODO
+        }
+
+        switch (type) {
+            case MessageType.TEXT:
+                String body = message.getBody();
+                if (body == null || body.isBlank()) {
+                    // TODO
+                    break;
+                }
+
+                Message textMessage = new Message(this.username, message.getBody(), Instant.now());
+                room.updateChatLog(textMessage);
+                room.broadcast(textMessage);
+                break;
+            case MessageType.NAME_REQUEST:
+                String username = message.getBody();
+                if (username == null || username.isBlank()) {
+                    // TODO
+                    break;
+                }
+                // TODO check if name is available
+                Message ack = new Message(MessageType.ACK);
+                sendMessage(ack);
+            default: // ignore
+                break;
+        }
     }
 }

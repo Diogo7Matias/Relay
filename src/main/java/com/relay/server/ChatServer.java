@@ -27,7 +27,7 @@ public class ChatServer {
                 Thread thread = new Thread(handler);
                 thread.start();
                 
-                System.out.println("Client connected: " + clientSocket.getInetAddress() + " " + clientSocket.getPort());                
+                System.out.println("Client connected: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());                
                 clientCount++;
             }
 

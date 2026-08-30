@@ -2,6 +2,9 @@ package com.relay.client;
 
 import java.io.IOException;
 
+import com.relay.client.controller.ChatController;
+import com.relay.client.controller.LoginController;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -18,30 +21,63 @@ public class ChatClient extends Application {
     private final double SCENE_WIDTH = 1200;
     private final double SCENE_HEIGHT = 900;
 
+    private Stage stage;
+    private final ServerConnection svConnection = new ServerConnection();
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
     @Override
     public void start(Stage stage) throws IOException {
-        ServerConnection connection = new ServerConnection();
-        Thread netThread = new Thread(connection);
+        Thread netThread = new Thread(svConnection);
         netThread.start();
         
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("chat.fxml"));
+        this.stage = stage;
+        displayLoginView();
+    }
+
+    private void displayLoginView() throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("login.fxml"));
         Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
-        ChatController controller = loader.getController();
-        
-        controller.setServerConnection(connection);
-        connection.setOnMessageReceived(
+        LoginController controller = loader.getController();
+
+        controller.setServerConnection(svConnection);
+        svConnection.setOnUsernameChosen(
             msg -> Platform.runLater(
-                () -> controller.updateChatHistory(msg)
+                () -> displayChatView()
             )
         );
         scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
 
-        stage.setTitle("Relay Client");
-        stage.setScene(scene);
-        stage.show();
+        this.stage.setTitle("Relay - Log In");
+        this.stage.setScene(scene);
+        this.stage.show();
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    private void displayChatView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("chat.fxml"));
+            Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
+            ChatController controller = loader.getController();
+            
+            controller.setServerConnection(svConnection);
+            svConnection.setOnMessageReceived(
+                msg -> Platform.runLater(
+                    () -> controller.updateChatHistory(msg)
+                )
+            );
+            scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+
+            this.stage.setTitle("Relay Client");
+            this.stage.setScene(scene);
+        } catch (IOException e) {
+            System.err.println("Failed to load chat view.\n" + e.getMessage());
+        }
+    }
+
+    @Override
+    public void stop() {
+        svConnection.closeConnection();
     }
 }

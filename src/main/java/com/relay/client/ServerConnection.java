@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.relay.protocol.Message;
+import com.relay.protocol.MessageType;
 import com.relay.protocol.MessageAdapter;
 
 public class ServerConnection implements Runnable {
@@ -24,9 +25,14 @@ public class ServerConnection implements Runnable {
     private PrintWriter serverOut;
 
     private Consumer<Message> onMessageReceived;
+    private Consumer<Message> onUsernameChosen;
 
     public void setOnMessageReceived(Consumer<Message> handler) {
         this.onMessageReceived = handler;
+    }
+
+    public void setOnUsernameChosen(Consumer<Message> handler) {
+        this.onUsernameChosen = handler;
     }
 
     @Override
@@ -35,7 +41,6 @@ public class ServerConnection implements Runnable {
             socket = new Socket(HOST, PORT);
             serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             serverOut = new PrintWriter(socket.getOutputStream(), true);
-            System.out.println("Connected to server. Type a message and press Enter.");
         } catch (IOException e) {
             System.err.println("Could not connect to server.\n" + e.getMessage());
             closeConnection();
@@ -46,12 +51,8 @@ public class ServerConnection implements Runnable {
         String jsonLine;
         try {
             while ((jsonLine = serverIn.readLine()) != null) {
-                Message newMessage = gson.fromJson(jsonLine, Message.class);
-                if (onMessageReceived != null) {
-                    onMessageReceived.accept(newMessage);
-                } else {
-                    System.err.println("onMessageReceived not specified.");
-                }
+                Message incomingMessage = gson.fromJson(jsonLine, Message.class);
+                handleMessage(incomingMessage);
             }
         } catch (IOException e) {
             System.err.println("Failed to fetch message from server.\n" + e.getMessage());
@@ -60,22 +61,68 @@ public class ServerConnection implements Runnable {
     }
 
     /**
-     * Sends a message body (its content) to the server.
+     * Sends a message containing messageBody to the server.
      * 
      * @param messageBody the message content
      */
     public void send(String messageBody) {
         if (socket != null && !socket.isClosed()) {
-            serverOut.println(messageBody);
+            Message message = new Message(messageBody, MessageType.TEXT);
+            String jsonline = gson.toJson(message);
+            serverOut.println(jsonline);
         } else {
             System.err.println("Cannot contact server.");
         }
     }
 
     /**
+     * Requests a username from the server to identify this client.
+     * 
+     * @param username the username being requested
+     */
+    public void requestUsername(String username) {
+        if (socket != null && !socket.isClosed()) {
+            Message request = new Message(username, MessageType.NAME_REQUEST);
+            String jsonline = gson.toJson(request);
+            serverOut.println(jsonline);
+        } else {
+            System.err.println("Cannot contact server.");
+        }
+    }
+
+    private void handleMessage(Message message) {
+        MessageType type = message.getType();
+        if (type == null) {
+            // TODO
+            return;
+        }
+
+        switch (type) {
+            case MessageType.TEXT:
+                if (onMessageReceived != null) {
+                    onMessageReceived.accept(message);
+                } else {
+                    System.err.println("onMessageReceived not specified.");
+                }
+                break;
+            case MessageType.ACK:
+                // if (state == ...) // implement state pattern ?
+                if (onUsernameChosen != null) {
+                    onUsernameChosen.accept(message);
+                } else {
+                    System.err.println("onUsernameChosen not specified.");
+                }
+                break;
+        
+            default: // ignore
+                break;
+        }
+    }
+
+    /**
      * Closes the socket used to contact the server if it is open.
      */
-    private void closeConnection() {
+    public void closeConnection() {
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();

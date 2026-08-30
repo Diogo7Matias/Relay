@@ -15,11 +15,15 @@ public class MessageAdapter extends TypeAdapter<Message> {
             out.nullValue();
             return;
         }
+        
+        Instant timestamp = value.getTimestamp();
+        String timestampValue = timestamp != null ? timestamp.toString() : null;
 
         out.beginObject();
         out.name("sender").value(value.getSender());
         out.name("body").value(value.getBody());
-        out.name("timestamp").value(value.getTimestamp().toString());
+        out.name("timestamp").value(timestampValue);
+        out.name("type").value(value.getType().toString());
         out.endObject();
     }
 
@@ -28,6 +32,7 @@ public class MessageAdapter extends TypeAdapter<Message> {
         String sender = null;
         String body = null;
         Instant timestamp = null;
+        MessageType type = null;
 
         in.beginObject();
         while (in.hasNext()) {
@@ -36,11 +41,22 @@ public class MessageAdapter extends TypeAdapter<Message> {
                 case "sender" -> sender = in.nextString();
                 case "body" -> body = in.nextString();
                 case "timestamp" -> timestamp = Instant.parse(in.nextString());
+                case "type" -> type = MessageType.valueOf(in.nextString().toUpperCase());
                 default -> in.skipValue(); // ignore unknown fields
             }
         }
         in.endObject();
 
-        return new Message(sender, body, timestamp);
+        switch (type) {
+            case MessageType.TEXT:
+                return new Message(sender, body, timestamp);
+            case MessageType.NAME_REQUEST:
+                return new Message(body, type);
+            case MessageType.ACK:
+                return new Message(type);                
+            default:
+                System.err.println("MessageAdapter failed to parse message.");
+                return new Message(type);
+        }
     }
 }

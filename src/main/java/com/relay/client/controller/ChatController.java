@@ -1,5 +1,7 @@
-package com.relay.client;
+package com.relay.client.controller;
 
+import com.relay.client.MessageCell;
+import com.relay.client.ServerConnection;
 import com.relay.protocol.Message;
 
 import javafx.application.Platform;
