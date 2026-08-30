@@ -26,6 +26,7 @@ public class ServerConnection implements Runnable {
 
     private Consumer<Message> onMessageReceived;
     private Consumer<Message> onUsernameChosen;
+    private Consumer<Message> onErrorReceived;
 
     public void setOnMessageReceived(Consumer<Message> handler) {
         this.onMessageReceived = handler;
@@ -33,6 +34,10 @@ public class ServerConnection implements Runnable {
 
     public void setOnUsernameChosen(Consumer<Message> handler) {
         this.onUsernameChosen = handler;
+    }
+
+    public void setOnErrorReceived(Consumer<Message> handler) {
+        this.onErrorReceived = handler;
     }
 
     @Override
@@ -114,7 +119,12 @@ public class ServerConnection implements Runnable {
                     System.err.println("onUsernameChosen not specified.");
                 }
                 break;
-        
+            case MessageType.ERROR:
+                if (onErrorReceived != null) {
+                    onErrorReceived.accept(message);
+                } else {
+                    System.err.println("onErrorReceived not specified.");
+                }
             default: // ignore
                 break;
         }

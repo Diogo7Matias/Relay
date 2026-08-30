@@ -6,6 +6,8 @@
     -super-light-grey: #3a3a3a;
     -text-color: #e2e2e2;
     -highlight-color: rgba(101, 233, 123, 1);
+    -error-base-color: rgb(82, 35, 35);
+    -error-text-color: rgb(255, 19, 19);
 }
 
 * {
@@ -25,6 +27,15 @@
 .input-field {
     -fx-background-color: -dark-grey;
     -fx-padding: 8px;
+}
+
+/* Error Messages */
+
+.error-message {
+    -fx-background-color: -error-base-color;
+    -fx-text-fill: -error-text-color;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
 }
 
 /* Log in Screen */

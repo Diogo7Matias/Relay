@@ -24,6 +24,7 @@ public class MessageAdapter extends TypeAdapter<Message> {
         out.name("body").value(value.getBody());
         out.name("timestamp").value(timestampValue);
         out.name("type").value(value.getType().toString());
+        out.name("errorMessage").value(value.getErrorMessage());
         out.endObject();
     }
 
@@ -33,6 +34,7 @@ public class MessageAdapter extends TypeAdapter<Message> {
         String body = null;
         Instant timestamp = null;
         MessageType type = null;
+        String errorMessage = null;
 
         in.beginObject();
         while (in.hasNext()) {
@@ -42,6 +44,7 @@ public class MessageAdapter extends TypeAdapter<Message> {
                 case "body" -> body = in.nextString();
                 case "timestamp" -> timestamp = Instant.parse(in.nextString());
                 case "type" -> type = MessageType.valueOf(in.nextString().toUpperCase());
+                case "errorMessage" -> errorMessage = in.nextString();
                 default -> in.skipValue(); // ignore unknown fields
             }
         }
@@ -53,7 +56,9 @@ public class MessageAdapter extends TypeAdapter<Message> {
             case MessageType.NAME_REQUEST:
                 return new Message(body, type);
             case MessageType.ACK:
-                return new Message(type);                
+                return new Message(type);   
+            case MessageType.ERROR:
+                return new Message(errorMessage);             
             default:
                 System.err.println("MessageAdapter failed to parse message.");
                 return new Message(type);

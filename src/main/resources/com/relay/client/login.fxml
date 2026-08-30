@@ -8,6 +8,7 @@
 <VBox styleClass="login-container"
         xmlns="http://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
+        fx:id="page"
         fx:controller="com.relay.client.controller.LoginController"
         alignment="CENTER" spacing="8">
     <children>

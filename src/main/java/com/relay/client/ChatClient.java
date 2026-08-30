@@ -48,6 +48,11 @@ public class ChatClient extends Application {
                 () -> displayChatView()
             )
         );
+        svConnection.setOnErrorReceived(
+            msg -> Platform.runLater(
+                () -> controller.displayErrorMessage(msg)
+            )
+        );
         scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
 
         this.stage.setTitle("Relay - Log In");

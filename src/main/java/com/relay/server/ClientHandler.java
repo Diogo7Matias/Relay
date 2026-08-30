@@ -56,7 +56,13 @@ public class ClientHandler implements Runnable {
             while ((jsonLine = in.readLine()) != null) {
                 System.out.println("Received: " + jsonLine);
                 Message message = gson.fromJson(jsonLine, Message.class);
-                handleMessage(message);
+                
+                try {
+                    handleMessage(message);
+                } catch (RelayException e) {
+                    Message errorMsg = new Message(e.getErrorMessage().label);
+                    sendMessage(errorMsg);
+                }
             }
             out.close();
         } catch (IOException e) {

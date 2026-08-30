@@ -6,6 +6,7 @@ package com.relay.protocol;
  * @see NAME_REQUEST 
  * @see TEXT
  * @see ACK
+ * @see ERROR
  */
 public enum MessageType {
 
@@ -25,5 +26,10 @@ public enum MessageType {
      * A type of control message representing an acknowledgement
      * of something related to a previous message.
      */
-    ACK
+    ACK,
+
+    /**
+     * Represents an error message.
+     */
+    ERROR
 }

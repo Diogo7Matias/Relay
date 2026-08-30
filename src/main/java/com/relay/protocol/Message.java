@@ -10,6 +10,7 @@ public class Message {
     private final String body;
     private final Instant timestamp;
     private final MessageType type;
+    private final String errorMessage;
 
     private static final Gson gson = new GsonBuilder()
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
@@ -24,6 +25,7 @@ public class Message {
         this.body = body;
         this.timestamp = timestamp;
         this.type = MessageType.TEXT;
+        this.errorMessage = null;
     }
 
     /**
@@ -36,6 +38,7 @@ public class Message {
         this.body = body;
         this.timestamp = null;
         this.type = type;
+        this.errorMessage = null;
     }
 
     /**
@@ -48,6 +51,19 @@ public class Message {
         this.body = null;
         this.timestamp = null;
         this.type = type;
+        this.errorMessage = null;
+    }
+
+    /**
+     * This constructor's purpose is to create messages of the type ERROR
+     * by specifying the errorMessage.
+     */
+    public Message(String errorMessage) {
+        this.sender = null;
+        this.body = null;
+        this.timestamp = null;
+        this.type = MessageType.ERROR;
+        this.errorMessage = errorMessage;
     }
 
     public String getSender() {
@@ -64,6 +80,10 @@ public class Message {
 
     public MessageType getType() {
         return this.type;
+    }
+
+    public String getErrorMessage() {
+        return this.errorMessage;
     }
 
     @Override
