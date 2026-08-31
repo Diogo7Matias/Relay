@@ -53,6 +53,8 @@ public class ChatController {
         String text = inputField.getText();
         inputField.clear();
 
+        if (text == null || text.isBlank()) return;
+
         // NOTE: the javaFX thread is the one executing this operation.
         // Consider handing this task over to another thread if this one
         // somehow gets blocked for too long.

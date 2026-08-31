@@ -11,11 +11,11 @@ import com.relay.server.net.ClientHandler;
  */
 public class ChatServer {
     private static final int PORT = 5000;
-    private static final int MAX_CLIENTS = 2;
+    private static final int MAX_CLIENTS = 10;
 
     public static void main(String[] args) throws IOException {
         ChatRoom room = new ChatRoom();
-        Integer clientCount = 0;
+        int clientCount = 0;
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server listening on port " + PORT + "...");
@@ -33,7 +33,7 @@ public class ChatServer {
                 clientCount++;
             }
 
-            System.out.println("Maximum number of clients reached. Server is no longer accepting connections.");
+            System.out.println("Maximum number of clients reached. No longer accepting connections.");
         }
     }
 }

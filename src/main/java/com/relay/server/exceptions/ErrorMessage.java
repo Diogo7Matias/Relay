@@ -1,7 +1,8 @@
 package com.relay.server.exceptions;
 
 public enum ErrorMessage {
-    USER_NAME_INVALID("User name is invalid."),
+    USERNAME_INVALID("Username is invalid."),
+    USERNAME_ALREADY_EXISTS("Username already exists."),
     MESSAGE_FORMAT_INVALID("Invalid message format."),
     MESSAGE_BODY_MISSING("Message body field is empty or missing.")
     ;

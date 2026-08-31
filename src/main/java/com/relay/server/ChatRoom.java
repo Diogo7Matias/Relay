@@ -3,7 +3,7 @@ package com.relay.server;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.relay.protocol.Message;
-import static com.relay.server.exceptions.ErrorMessage.USER_NAME_INVALID;
+import static com.relay.server.exceptions.ErrorMessage.USERNAME_ALREADY_EXISTS;
 import com.relay.server.exceptions.RelayException;
 import com.relay.server.net.ClientHandler;
 
@@ -46,7 +46,7 @@ public class ChatRoom {
     public void isNameUnique(String name) {
         for (ClientHandler h : handlers) {
             if (h.getUsername() != null && h.getUsername().equals(name)) {
-                throw new RelayException(USER_NAME_INVALID);
+                throw new RelayException(USERNAME_ALREADY_EXISTS);
             }
         }
     }

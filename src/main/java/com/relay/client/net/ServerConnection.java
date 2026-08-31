@@ -140,6 +140,7 @@ public class ServerConnection implements Runnable {
             serverOut.println(jsonline);
         } else {
             System.err.println("Cannot contact server.");
+            notifyServerStatusChange(false);
         }
     }
 
