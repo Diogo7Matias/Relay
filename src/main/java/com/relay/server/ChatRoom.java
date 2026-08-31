@@ -5,6 +5,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.relay.protocol.Message;
 import static com.relay.server.exceptions.ErrorMessage.USER_NAME_INVALID;
 import com.relay.server.exceptions.RelayException;
+import com.relay.server.net.ClientHandler;
 
 public class ChatRoom {
 

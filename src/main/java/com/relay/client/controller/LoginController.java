@@ -1,13 +1,13 @@
 package com.relay.client.controller;
 
+import com.relay.client.net.ServerConnection;
+import com.relay.protocol.Message;
+
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
-
-import com.relay.client.ServerConnection;
-import com.relay.protocol.Message;
 
 public class LoginController {
     

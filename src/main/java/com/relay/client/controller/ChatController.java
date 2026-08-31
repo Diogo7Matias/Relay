@@ -1,14 +1,14 @@
 package com.relay.client.controller;
 
-import com.relay.client.MessageCell;
-import com.relay.client.ServerConnection;
+import com.relay.client.net.ServerConnection;
+import com.relay.client.view.MessageCell;
 import com.relay.protocol.Message;
 
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
+import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.fxml.FXML;
 
 public class ChatController {
 

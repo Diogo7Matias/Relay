@@ -1,4 +1,4 @@
-package com.relay.client;
+package com.relay.client.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,9 +9,12 @@ import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.relay.client.net.state.ConnectedState;
+import com.relay.client.net.state.ConnectionState;
+import com.relay.client.net.state.HandshakeState;
 import com.relay.protocol.Message;
-import com.relay.protocol.MessageType;
 import com.relay.protocol.MessageAdapter;
+import com.relay.protocol.MessageType;
 
 public class ServerConnection implements Runnable {
     private static final String HOST = "localhost";
@@ -27,6 +30,12 @@ public class ServerConnection implements Runnable {
     private Consumer<Message> onMessageReceived;
     private Consumer<Message> onUsernameChosen;
     private Consumer<Message> onErrorReceived;
+
+    private ConnectionState state = new HandshakeState();
+
+    public void setState(ConnectedState state) {
+        this.state = state;
+    }
 
     public void setOnMessageReceived(Consumer<Message> handler) {
         this.onMessageReceived = handler;
@@ -65,9 +74,25 @@ public class ServerConnection implements Runnable {
         }
         closeConnection();
     }
+    
+    /**
+     * Closes the socket used to contact the server if it is open.
+     */
+    public void closeConnection() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Error while closing connection.\n" + e.getMessage());
+        }
+    }
 
     /**
      * Sends a message containing messageBody to the server.
+     * 
+     * The messageBody is wrapped in a Message object which is converted 
+     * to a string formatted as a JSON object and sent over to the client.
      * 
      * @param messageBody the message content
      */
@@ -97,49 +122,31 @@ public class ServerConnection implements Runnable {
     }
 
     private void handleMessage(Message message) {
-        MessageType type = message.getType();
-        if (type == null) { // should not happen
+        if (message.getType() == null) { // should not happen
             System.err.println("Invalid message format from server.");
             return;
         }
-
-        switch (type) {
-            case MessageType.TEXT:
-                if (onMessageReceived != null) {
-                    onMessageReceived.accept(message);
-                } else {
-                    System.err.println("onMessageReceived not specified.");
-                }
-                break;
-            case MessageType.ACK:
-                // if (state == ...) // TODO implement state pattern ?
-                if (onUsernameChosen != null) {
-                    onUsernameChosen.accept(message);
-                } else {
-                    System.err.println("onUsernameChosen not specified.");
-                }
-                break;
-            case MessageType.ERROR:
-                if (onErrorReceived != null) {
-                    onErrorReceived.accept(message);
-                } else {
-                    System.err.println("onErrorReceived not specified.");
-                }
-            default: // ignore
-                break;
-        }
+        state.handleMessage(this, message);
     }
 
-    /**
-     * Closes the socket used to contact the server if it is open.
-     */
-    public void closeConnection() {
-        try {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-        } catch (IOException e) {
-            System.err.println("Error while closing connection.\n" + e.getMessage());
+    public void notifyMessageReceived(Message message) {
+        notify(onMessageReceived, message, "onMessageReceived");
+    }
+
+    public void notifyErrorReceived(Message message) {
+        notify(onErrorReceived, message, "onErrorReceived");
+    }
+
+    public void notifyUsernameChosen(Message message) {
+        notify(onUsernameChosen, message, "onUsernameChosen");
+    }
+
+    /* helper method to notify a consumer */
+    private void notify(Consumer<Message> handler, Message message, String handlerName) {
+        if (handler != null) {
+            handler.accept(message);
+        } else {
+            System.err.println(handlerName + " not specified.");
         }
     }
 }

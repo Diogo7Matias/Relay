@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.relay.client.controller.ChatController;
 import com.relay.client.controller.LoginController;
+import com.relay.client.net.ServerConnection;
 
 import javafx.application.Application;
 import javafx.application.Platform;

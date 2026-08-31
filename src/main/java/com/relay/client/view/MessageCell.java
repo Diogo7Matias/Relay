@@ -1,4 +1,4 @@
-package com.relay.client;
+package com.relay.client.view;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -7,8 +7,8 @@ import com.relay.protocol.Message;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 public class MessageCell extends ListCell<Message> {
     @Override

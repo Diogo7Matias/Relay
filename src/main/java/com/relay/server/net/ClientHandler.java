@@ -1,4 +1,4 @@
-package com.relay.server;
+package com.relay.server.net;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,11 +10,13 @@ import java.time.Instant;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.relay.protocol.Message;
-import com.relay.protocol.MessageType;
 import com.relay.protocol.MessageAdapter;
-
+import com.relay.protocol.MessageType;
+import com.relay.server.ChatRoom;
+import static com.relay.server.exceptions.ErrorMessage.MESSAGE_FORMAT_INVALID;
 import com.relay.server.exceptions.RelayException;
-import static com.relay.server.exceptions.ErrorMessage.*;
+import com.relay.server.net.state.ClientState;
+import com.relay.server.net.state.HandshakeState;
 
 public class ClientHandler implements Runnable {
     private final ChatRoom room;
@@ -22,6 +24,7 @@ public class ClientHandler implements Runnable {
     private String username;
 
     private PrintWriter out;
+    private ClientState state;
 
     /**
      * An instance of Gson, used to serialize/deserialize messages.
@@ -31,6 +34,7 @@ public class ClientHandler implements Runnable {
                                         .create();
 
     public ClientHandler(Socket socket, ChatRoom room) {
+        this.state = new HandshakeState();
         this.room = room;
         this.socket = socket;
     }
@@ -42,6 +46,10 @@ public class ClientHandler implements Runnable {
     public void setUsername(String username) {
         room.isNameUnique(username);
         this.username = username;
+    }
+
+    public void setState(ClientState state) {
+        this.state = state;
     }
 
     @Override
@@ -72,6 +80,13 @@ public class ClientHandler implements Runnable {
         System.out.println("Client disconnected.");
     }
 
+    private void handleMessage(Message message) {
+        if (message.getType() == null) {
+            throw new RelayException(MESSAGE_FORMAT_INVALID);
+        }
+        state.handleMessage(this, message);
+    }
+
     /**
      * Sends a message to the client associated with this handler.
      * 
@@ -85,38 +100,15 @@ public class ClientHandler implements Runnable {
         this.out.println(json);
     }
 
-    private void handleMessage(Message message) {
-        MessageType type = message.getType();
-        if (type == null) {
-            throw new RelayException(MESSAGE_FORMAT_INVALID);
-        }
+    public void procesTextMessage(String messageBody) {
+        Message textMessage = new Message(this.username, messageBody, Instant.now());
+        room.updateChatLog(textMessage);
+        room.broadcast(textMessage);
+    }
 
-        switch (type) {
-            case MessageType.TEXT:
-                String body = message.getBody();
-                if (body == null || body.isBlank()) {
-                    throw new RelayException(MESSAGE_BODY_MISSING);
-                }
-                
-                if (this.username == null) { // ignore 
-                    return;
-                }
-
-                Message textMessage = new Message(this.username, message.getBody(), Instant.now());
-                room.updateChatLog(textMessage);
-                room.broadcast(textMessage);
-                break;
-            case MessageType.NAME_REQUEST:
-                String username = message.getBody();
-                if (username == null || username.isBlank()) {
-                    throw new RelayException(MESSAGE_BODY_MISSING);
-                }
-
-                setUsername(username);
-                Message ack = new Message(MessageType.ACK);
-                sendMessage(ack);
-            default: // ignore
-                break;
-        }
+    public void processUsernameRequest(String username) {
+        setUsername(username);
+        Message ack = new Message(MessageType.ACK);
+        sendMessage(ack);
     }
 }
