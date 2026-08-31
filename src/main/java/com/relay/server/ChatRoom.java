@@ -29,6 +29,10 @@ public class ChatRoom {
         this.handlers.add(handler);
     }
 
+    public void removeHandler(ClientHandler handler) {
+        this.handlers.remove(handler);
+    }
+
     public void broadcast(Message message) {
         for (ClientHandler h : handlers) {
             h.sendMessage(message);

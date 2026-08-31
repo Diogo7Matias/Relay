@@ -74,10 +74,21 @@ public class ClientHandler implements Runnable {
             }
         } catch (IOException e) {
             System.err.println(e.getMessage());
+        } finally {
+            System.out.println("Client disconnected.");
+            room.removeHandler(this);
+            close();
         }
+    }
 
-        System.out.println("Client disconnected.");
-        if (this.out != null) this.out.close();
+    public void close() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Error while closing server: " + e.getMessage());
+        }
     }
 
     private void handleMessage(Message message) {

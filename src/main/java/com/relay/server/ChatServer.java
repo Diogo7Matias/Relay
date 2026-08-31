@@ -3,6 +3,7 @@ package com.relay.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.relay.server.net.ClientHandler;
 
@@ -15,9 +16,30 @@ public class ChatServer {
 
     public static void main(String[] args) throws IOException {
         ChatRoom room = new ChatRoom();
-        int clientCount = 0;
+        ConcurrentHashMap<ClientHandler, Thread> handlers = new ConcurrentHashMap<>();
 
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.err.println("Shutting down server...");
+
+            for (ClientHandler handler : handlers.keySet()) {
+                handler.close();
+            }
+
+            for (Thread thread : handlers.values()) {
+                try {
+                    thread.join(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+
+            System.err.println("Server shutdown complete.");
+        }));
+
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {            
+            int clientCount = 0;
+
             System.out.println("Server listening on port " + PORT + "...");
 
             // spawn a thread per client 
@@ -28,6 +50,7 @@ public class ChatServer {
 
                 Thread thread = new Thread(handler);
                 thread.start();
+                handlers.put(handler, thread);
                 
                 System.out.println("Client connected: " + clientSocket.getInetAddress() + ":" + clientSocket.getPort());                
                 clientCount++;

@@ -69,9 +69,10 @@ public class ServerConnection implements Runnable {
             }
         } catch (IOException e) {
             System.err.println("Failed to fetch message from server: " + e.getMessage());
+        } finally {
             notifyServerStatusChange(false);
+            closeConnection();
         }
-        closeConnection();
     }
 
     /**
@@ -88,8 +89,8 @@ public class ServerConnection implements Runnable {
             return true;
         } catch (IOException e) {
             System.err.println("Could not connect to server: " + e.getMessage());
-            closeConnection();
             notifyServerStatusChange(false);
+            closeConnection();
             return false;
         }
     }
