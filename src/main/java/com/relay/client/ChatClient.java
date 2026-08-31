@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.relay.client.controller.ChatController;
 import com.relay.client.controller.LoginController;
+import com.relay.client.controller.ServerDownController;
 import com.relay.client.net.ServerConnection;
 
 import javafx.application.Application;
@@ -31,34 +32,67 @@ public class ChatClient extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        Thread netThread = new Thread(svConnection);
-        netThread.start();
-        
         this.stage = stage;
-        displayLoginView();
+
+        svConnection.setOnServerStatusChange(
+            isUp -> Platform.runLater(() -> {
+                if (isUp) {
+                    displayLoginView();
+                } else {
+                    displayServerDownView();
+                }
+            })
+        );
+
+        if (svConnection.connect()) {
+            Thread netThread = new Thread(svConnection);
+            netThread.start();
+            displayLoginView();
+        }
     }
 
-    private void displayLoginView() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("login.fxml"));
-        Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
-        LoginController controller = loader.getController();
+    private void displayLoginView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("login.fxml"));
+            Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
+            LoginController controller = loader.getController();
 
-        controller.setServerConnection(svConnection);
-        svConnection.setOnUsernameChosen(
-            msg -> Platform.runLater(
-                () -> displayChatView()
-            )
-        );
-        svConnection.setOnErrorReceived(
-            msg -> Platform.runLater(
-                () -> controller.displayErrorMessage(msg)
-            )
-        );
-        scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+            controller.setServerConnection(svConnection);
+            svConnection.setOnUsernameChosen(
+                () -> Platform.runLater(
+                    () -> displayChatView()
+                )
+            );
+            svConnection.setOnErrorReceived(
+                msg -> Platform.runLater(
+                    () -> controller.displayErrorMessage(msg)
+                )
+            );
+            scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
 
-        this.stage.setTitle("Relay - Log In");
-        this.stage.setScene(scene);
-        this.stage.show();
+            this.stage.setTitle("Relay - Log In");
+            this.stage.setScene(scene);
+            this.stage.show();
+        } catch (IOException e) {
+            System.err.println("Failed to load login view.\n" + e.getMessage());
+        }
+    }
+
+    private void displayServerDownView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("server-down.fxml"));
+            Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
+            ServerDownController controller = loader.getController();
+
+            controller.setServerConnection(svConnection);
+            scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+
+            this.stage.setTitle("Relay Client");
+            this.stage.setScene(scene);
+            this.stage.show();
+        } catch (IOException e) {
+            System.err.println("Failed to load server-down view.\n" + e.getMessage());
+        }
     }
 
     private void displayChatView() {

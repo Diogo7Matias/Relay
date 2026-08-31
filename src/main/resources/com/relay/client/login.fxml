@@ -14,7 +14,7 @@
     <children>
         <Label text="Enter your username:"/>
         <TextField fx:id="usernameField" promptText="Enter Username..." maxWidth="240" onAction="#handleConfirm" styleClass="input-field"/>
-        <Button text="Confirm" onAction="#handleConfirm">
+        <Button text="Confirm" onAction="#handleConfirm" styleClass="button-highlight">
             <VBox.margin>
                 <Insets top="10"/>
             </VBox.margin>

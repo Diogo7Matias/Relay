@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.relay.client.net.state.ConnectedState;
 import com.relay.client.net.state.ConnectionState;
 import com.relay.client.net.state.HandshakeState;
 import com.relay.protocol.Message;
@@ -27,64 +26,86 @@ public class ServerConnection implements Runnable {
     private BufferedReader serverIn;
     private PrintWriter serverOut;
 
+    private Consumer<Boolean> onServerStatusChange;
     private Consumer<Message> onMessageReceived;
-    private Consumer<Message> onUsernameChosen;
     private Consumer<Message> onErrorReceived;
+    private Runnable onUsernameChosen;
 
     private ConnectionState state = new HandshakeState();
 
-    public void setState(ConnectedState state) {
+    public void setState(ConnectionState state) {
         this.state = state;
+    }
+
+    public void setOnServerStatusChange(Consumer<Boolean> handler) {
+        this.onServerStatusChange = handler;
     }
 
     public void setOnMessageReceived(Consumer<Message> handler) {
         this.onMessageReceived = handler;
     }
 
-    public void setOnUsernameChosen(Consumer<Message> handler) {
-        this.onUsernameChosen = handler;
-    }
-
     public void setOnErrorReceived(Consumer<Message> handler) {
         this.onErrorReceived = handler;
     }
 
+    public void setOnUsernameChosen(Runnable handler) {
+        this.onUsernameChosen = handler;
+    }
+
     @Override
     public void run() {
-        try {
-            socket = new Socket(HOST, PORT);
-            serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            serverOut = new PrintWriter(socket.getOutputStream(), true);
-        } catch (IOException e) {
-            System.err.println("Could not connect to server.\n" + e.getMessage());
-            closeConnection();
+        if (socket == null || socket.isClosed()) {
             return;
         }
 
-        // await messages from the server
         String jsonLine;
         try {
+            // await messages from the server
             while ((jsonLine = serverIn.readLine()) != null) {
                 System.out.println("Received: " + jsonLine);
                 Message incomingMessage = gson.fromJson(jsonLine, Message.class);
                 handleMessage(incomingMessage);
             }
         } catch (IOException e) {
-            System.err.println("Failed to fetch message from server.\n" + e.getMessage());
+            System.err.println("Failed to fetch message from server: " + e.getMessage());
+            notifyServerStatusChange(false);
         }
         closeConnection();
+    }
+
+    /**
+     * Attempts to create a socket and connect to the server.
+     * 
+     * @return whether the connection was successful or not
+     */
+    public boolean connect() {
+        try {
+            socket = new Socket(HOST, PORT);
+            serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            serverOut = new PrintWriter(socket.getOutputStream(), true);
+            notifyServerStatusChange(true);
+            return true;
+        } catch (IOException e) {
+            System.err.println("Could not connect to server: " + e.getMessage());
+            closeConnection();
+            notifyServerStatusChange(false);
+            return false;
+        }
     }
     
     /**
      * Closes the socket used to contact the server if it is open.
      */
     public void closeConnection() {
+        setState(new HandshakeState());
         try {
+            System.out.println("Closing connection...");
             if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
         } catch (IOException e) {
-            System.err.println("Error while closing connection.\n" + e.getMessage());
+            System.err.println("Error while closing connection: " + e.getMessage());
         }
     }
 
@@ -103,6 +124,7 @@ public class ServerConnection implements Runnable {
             serverOut.println(jsonline);
         } else {
             System.err.println("Cannot contact server.");
+            notifyServerStatusChange(false);
         }
     }
 
@@ -129,6 +151,10 @@ public class ServerConnection implements Runnable {
         state.handleMessage(this, message);
     }
 
+    public void notifyServerStatusChange(Boolean isUp) {
+        notify(onServerStatusChange, isUp, "onServerDown");
+    }
+
     public void notifyMessageReceived(Message message) {
         notify(onMessageReceived, message, "onMessageReceived");
     }
@@ -137,14 +163,23 @@ public class ServerConnection implements Runnable {
         notify(onErrorReceived, message, "onErrorReceived");
     }
 
-    public void notifyUsernameChosen(Message message) {
-        notify(onUsernameChosen, message, "onUsernameChosen");
+    public void notifyUsernameChosen() {
+        notify(onUsernameChosen, "onUsernameChosen");
     }
 
     /* helper method to notify a consumer */
-    private void notify(Consumer<Message> handler, Message message, String handlerName) {
+    private <T> void notify(Consumer<T> handler, T arg, String handlerName) {
         if (handler != null) {
-            handler.accept(message);
+            handler.accept(arg);
+        } else {
+            System.err.println(handlerName + " not specified.");
+        }
+    }
+
+    /* helper method to notify a runnable */
+    private void notify(Runnable handler, String handlerName) {
+        if (handler != null) {
+            handler.run();
         } else {
             System.err.println(handlerName + " not specified.");
         }

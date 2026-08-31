@@ -9,7 +9,7 @@ public class HandshakeState implements ConnectionState {
         switch (message.getType()) {
             case ERROR -> connection.notifyErrorReceived(message);
             case ACK -> {
-                connection.notifyUsernameChosen(message);
+                connection.notifyUsernameChosen();
                 connection.setState(new ConnectedState());
             }
             default -> System.err.println("Ignoring message, still in handshake: " + message.getType());
