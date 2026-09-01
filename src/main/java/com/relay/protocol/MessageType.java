@@ -7,6 +7,8 @@ package com.relay.protocol;
  * @see TEXT
  * @see ACK
  * @see ERROR
+ * @see NEW_CHAT_REQUEST
+ * @see CONNECT_TO_CHAT_REQUEST#JOIN_CHAT_REQUEST
  */
 public enum MessageType {
 
@@ -31,5 +33,23 @@ public enum MessageType {
     /**
      * Represents an error message.
      */
-    ERROR
+    ERROR,
+
+    /**
+     * A type of message sent by a client requesting the creation 
+     * of a new chat.
+     */
+    NEW_CHAT_REQUEST,
+
+    /**
+     * The response to a NEW_CHAT_REQUEST.
+     * Should contain the ID of the new chat.
+     */
+    NEW_CHAT_RESPONSE,
+
+    /**
+     * A type of message representing a client request to join a
+     * chat room.
+     */
+    JOIN_CHAT_REQUEST
 }

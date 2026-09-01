@@ -3,11 +3,12 @@ package com.relay.server;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.relay.protocol.Message;
-import static com.relay.server.exceptions.ErrorMessage.USERNAME_ALREADY_EXISTS;
-import com.relay.server.exceptions.RelayException;
 import com.relay.server.net.ClientHandler;
 
 public class ChatRoom {
+
+    private static long idCount = 0;
+    private final String id;
 
     /**
      * A list of handlers for the clients participating in the room.
@@ -25,12 +26,22 @@ public class ChatRoom {
      */
     private final CopyOnWriteArrayList<Message> chatLog = new CopyOnWriteArrayList<>();
 
+    public ChatRoom() {
+        this.id = "ROOM#" + idCount++;
+    }
+
+    public String getID() {
+        return this.id;
+    }
+
     public void addHandler(ClientHandler handler) {
         this.handlers.add(handler);
+        handler.setChatRoom(this);
     }
 
     public void removeHandler(ClientHandler handler) {
         this.handlers.remove(handler);
+        handler.setChatRoom(null);
     }
 
     public void broadcast(Message message) {
@@ -45,13 +56,5 @@ public class ChatRoom {
 
     public void printLog() {
         System.out.println(chatLog.toString());
-    }
-
-    public void isNameUnique(String name) {
-        for (ClientHandler h : handlers) {
-            if (h.getUsername() != null && h.getUsername().equals(name)) {
-                throw new RelayException(USERNAME_ALREADY_EXISTS);
-            }
-        }
     }
 }

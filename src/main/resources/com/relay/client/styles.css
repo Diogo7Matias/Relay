@@ -39,6 +39,15 @@
     -fx-padding: 8px;
 }
 
+.list-view {
+    -fx-background-color: transparent;
+    -fx-hbar-policy: never;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+}
+
 /* Error Messages */
 
 .error-message {
@@ -61,16 +70,19 @@
     -fx-border-radius: 4px;
 }
 
-/* Chat History Section (Center of the screen) */
+/* Chats List Section (Left side of the screen) */
 
-.chat-history {
+.sidebar {
+    -fx-background-color: -medium-grey;
+}
+
+.chat-entry-container {
     -fx-background-color: -dark-grey;
-    -fx-hbar-policy: never;
+    -fx-spacing: 5px;
+    -fx-padding: 8px 0px;
 }
 
-.list-cell {
-    -fx-background-color: transparent;
-}
+/* Chat History Section (Center of the screen) */
 
 .message-container {
     -fx-background-color: -medium-dark-grey;

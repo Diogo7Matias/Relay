@@ -29,6 +29,8 @@ public class ServerConnection implements Runnable {
     private Consumer<Boolean> onServerStatusChange;
     private Consumer<Message> onMessageReceived;
     private Consumer<Message> onErrorReceived;
+    private Consumer<Message> onNewChat;
+    private Consumer<String> onJoinChat;
     private Runnable onUsernameChosen;
 
     private ConnectionState state = new HandshakeState();
@@ -47,6 +49,14 @@ public class ServerConnection implements Runnable {
 
     public void setOnErrorReceived(Consumer<Message> handler) {
         this.onErrorReceived = handler;
+    }
+
+    public void setOnNewChat(Consumer<Message> handler) {
+        this.onNewChat = handler;
+    }
+
+    public void setOnJoinChaat(Consumer<String> handler) {
+        this.onJoinChat = handler;
     }
 
     public void setOnUsernameChosen(Runnable handler) {
@@ -145,6 +155,32 @@ public class ServerConnection implements Runnable {
         }
     }
 
+    public void createNewChat(String chatName) {
+        if (socket != null && !socket.isClosed()) {
+            Message request = new Message(chatName, MessageType.NEW_CHAT_REQUEST);
+            String jsonline = gson.toJson(request);
+            serverOut.println(jsonline);
+        } else {
+            System.err.println("Cannot contact server.");
+            notifyServerStatusChange(false);
+        }
+    }
+
+    public void joinChat(String chatName) {
+        if (socket != null && !socket.isClosed()) {
+            Message request = new Message(chatName, MessageType.JOIN_CHAT_REQUEST);
+            String jsonline = gson.toJson(request);
+            serverOut.println(jsonline);
+        } else {
+            System.err.println("Cannot contact server.");
+            notifyServerStatusChange(false);
+        }
+    }
+
+    public void loadChatHistory(String chatID) {
+        // TODO: fetch from server
+    }
+
     private void handleMessage(Message message) {
         if (message.getType() == null) { // should not happen
             System.err.println("Invalid message format from server.");
@@ -163,6 +199,14 @@ public class ServerConnection implements Runnable {
 
     public void notifyErrorReceived(Message message) {
         notify(onErrorReceived, message, "onErrorReceived");
+    }
+
+    public void notifyNewChat(Message message) {
+        notify(onNewChat, message, "onNewChat");
+    }
+
+    public void notifyJoinChat(String chatID) {
+        notify(onJoinChat, chatID, "onJoinChat");
     }
 
     public void notifyUsernameChosen() {

@@ -13,19 +13,22 @@ import com.relay.protocol.Message;
 import com.relay.protocol.MessageAdapter;
 import com.relay.protocol.MessageType;
 import com.relay.server.ChatRoom;
+import com.relay.server.ChatServer;
 import static com.relay.server.exceptions.ErrorMessage.MESSAGE_FORMAT_INVALID;
 import com.relay.server.exceptions.RelayException;
 import com.relay.server.net.state.ClientState;
 import com.relay.server.net.state.HandshakeState;
 
 public class ClientHandler implements Runnable {
-    private final ChatRoom room;
     private final Socket socket;
     private String username;
-
+    
     private PrintWriter out;
     private ClientState state;
-
+    
+    private final ChatServer chatServer;
+    private ChatRoom room;
+    
     /**
      * An instance of Gson, used to serialize/deserialize messages.
      */
@@ -33,10 +36,10 @@ public class ClientHandler implements Runnable {
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
                                         .create();
 
-    public ClientHandler(Socket socket, ChatRoom room) {
-        this.state = new HandshakeState();
-        this.room = room;
+    public ClientHandler(Socket socket, ChatServer chatServer) {
+        this.chatServer = chatServer;
         this.socket = socket;
+        this.state = new HandshakeState();
     }
 
     public String getUsername() {
@@ -44,12 +47,16 @@ public class ClientHandler implements Runnable {
     }
     
     public void setUsername(String username) {
-        room.isNameUnique(username);
+        chatServer.isNameUnique(username);
         this.username = username;
     }
 
     public void setState(ClientState state) {
         this.state = state;
+    }
+
+    public void setChatRoom(ChatRoom room) {
+        this.room = room;
     }
 
     @Override
@@ -76,7 +83,9 @@ public class ClientHandler implements Runnable {
             System.err.println(e.getMessage());
         } finally {
             System.out.println("Client disconnected.");
-            room.removeHandler(this);
+            if (room != null) {
+                room.removeHandler(this);
+            }
             close();
         }
     }
@@ -111,7 +120,7 @@ public class ClientHandler implements Runnable {
         this.out.println(json);
     }
 
-    public void procesTextMessage(String messageBody) {
+    public void processTextMessage(String messageBody) {
         Message textMessage = new Message(this.username, messageBody, Instant.now());
         room.updateChatLog(textMessage);
         room.broadcast(textMessage);
@@ -119,6 +128,16 @@ public class ClientHandler implements Runnable {
 
     public void processUsernameRequest(String username) {
         setUsername(username);
+        Message ack = new Message(MessageType.ACK);
+        sendMessage(ack);
+    }
+
+    public void processNewChatRequest(String otherUser) {
+        this.chatServer.newRoom(this, otherUser);
+    }
+
+    public void processJoinChatRoom(String roomID) {
+        this.chatServer.joinChatRoom(this, roomID);
         Message ack = new Message(MessageType.ACK);
         sendMessage(ack);
     }

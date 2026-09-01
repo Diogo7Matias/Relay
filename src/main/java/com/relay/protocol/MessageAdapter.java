@@ -51,13 +51,13 @@ public class MessageAdapter extends TypeAdapter<Message> {
         in.endObject();
 
         switch (type) {
-            case MessageType.TEXT:
+            case TEXT:
                 return new Message(sender, body, timestamp);
-            case MessageType.NAME_REQUEST:
+            case NAME_REQUEST, NEW_CHAT_REQUEST, NEW_CHAT_RESPONSE, JOIN_CHAT_REQUEST:
                 return new Message(body, type);
-            case MessageType.ACK:
+            case ACK:
                 return new Message(type);   
-            case MessageType.ERROR:
+            case ERROR:
                 return new Message(errorMessage);             
             default:
                 System.err.println("MessageAdapter failed to parse message.");

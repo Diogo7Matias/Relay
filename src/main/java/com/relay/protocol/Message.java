@@ -1,9 +1,9 @@
 package com.relay.protocol;
 
+import java.time.Instant;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import java.time.Instant;
 
 public class Message {
     private final String sender;
