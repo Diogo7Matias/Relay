@@ -11,8 +11,11 @@
 }
 
 * {
-    -fx-background-color: -dark-grey;
     -fx-text-fill: -text-color;
+}
+
+.root {
+    -fx-background-color: -dark-grey;
 }
 
 /* Generics */
@@ -73,13 +76,42 @@
 /* Chats List Section (Left side of the screen) */
 
 .sidebar {
+    -fx-border-color: -medium-grey;
+    -fx-border-width: 0 2px 0 0;
+}
+
+.sidebar .separator {
+    -fx-padding: 0 16px;
+}
+
+.sidebar .separator .line {
+    -fx-border-color: -medium-grey;
+    -fx-border-width: 2px 0 0 0;
+}
+
+.sidebar .list-cell {
+    -fx-padding: 2px 0;
+}
+
+.list-cell:hover .chat-entry-container {
+    -fx-background-color: -medium-grey;
+    -fx-cursor: hand;
+}
+
+.list-cell:selected .chat-entry-container {
+    -fx-background-color: -medium-dark-grey;
+}
+
+.list-cell:selected:hover .chat-entry-container {
     -fx-background-color: -medium-grey;
 }
 
 .chat-entry-container {
-    -fx-background-color: -dark-grey;
-    -fx-spacing: 5px;
-    -fx-padding: 8px 0px;
+    -fx-padding: 16px 12px;
+}
+
+.chat-entry-name {
+    -fx-font-size: 18px;
 }
 
 /* Chat History Section (Center of the screen) */
@@ -88,12 +120,18 @@
     -fx-background-color: -medium-dark-grey;
     -fx-spacing: 5px;
     -fx-padding: 8px 10px;
+    -fx-border-color: -medium-grey;
+    -fx-border-width: 2px;
     -fx-border-radius: 4px;
     -fx-background-radius: 4px;
 }
 
+.message-container:hover {
+    -fx-background-color: transparent;
+}
+
 .message-container * {
-    -fx-background-color: -medium-dark-grey;
+    -fx-background-color: transparent;
 }
 
 .message-header {

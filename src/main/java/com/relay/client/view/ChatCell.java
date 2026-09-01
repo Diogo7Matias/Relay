@@ -20,7 +20,7 @@ public class ChatCell extends ListCell<ChatSummary> {
         Label chatNameLabel = new Label(chatSummary.getDisplayName());
         HBox container = new HBox(chatNameLabel);
 
-        chatNameLabel.getStyleClass().add("message-header-username");
+        chatNameLabel.getStyleClass().add("chat-entry-name");
         container.getStyleClass().add("chat-entry-container");
 
         setGraphic(container);
