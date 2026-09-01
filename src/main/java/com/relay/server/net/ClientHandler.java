@@ -122,7 +122,6 @@ public class ClientHandler implements Runnable {
 
     public void processTextMessage(String messageBody) {
         Message textMessage = new Message(this.username, messageBody, Instant.now());
-        room.updateChatLog(textMessage);
         room.broadcast(textMessage);
     }
 

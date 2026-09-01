@@ -66,7 +66,6 @@ public class ChatServer {
     }
 
     public void newRoom(ClientHandler requester, String otherUser) {
-        ChatRoom room = new ChatRoom();
         ClientHandler otherUserHandler = null;
 
         for (ClientHandler h : handlers.keySet()) {
@@ -77,8 +76,13 @@ public class ChatServer {
 
         if (otherUserHandler == null) {
             throw new RelayException(USER_NOT_FOUND);
-        } 
+        }
 
+        if (otherUserHandler.equals(requester)) {
+            return; // ignore
+        }
+
+        ChatRoom room = new ChatRoom();
         room.addHandler(otherUserHandler);
         room.addHandler(requester);
 
