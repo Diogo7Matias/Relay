@@ -55,8 +55,16 @@ public class ClientHandler implements Runnable {
         this.state = state;
     }
 
+    public String getRoomID() {
+        return this.room.getID();
+    }
+
     public void setChatRoom(ChatRoom room) {
         this.room = room;
+    }
+
+    public boolean hadRoom() {
+        return this.room != null;
     }
 
     @Override

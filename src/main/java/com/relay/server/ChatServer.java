@@ -69,7 +69,7 @@ public class ChatServer {
         ClientHandler otherUserHandler = null;
 
         for (ClientHandler h : handlers.keySet()) {
-            if (h.getUsername().equals(otherUser)) {
+            if (h.getUsername() != null && h.getUsername().equals(otherUser)) {
                 otherUserHandler = h;
             }
         }
@@ -93,6 +93,12 @@ public class ChatServer {
 
     public void joinChatRoom(ClientHandler requester, String roomID) {
         for (ChatRoom room : rooms) {
+            if (requester.hadRoom() && room.getID().equals(requester.getRoomID())) {
+                if (room.getID().equals(roomID)) { 
+                    break; // client is trying to join the room they are already in
+                }
+                room.removeHandler(requester);
+            }
             if (room.getID().equals(roomID)) {
                 room.addHandler(requester);
             }

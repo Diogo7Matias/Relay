@@ -10,7 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 
-public class ChatController {
+public class ChatController implements ViewController {
 
     /**
      * A connection to the server.
@@ -44,6 +44,7 @@ public class ChatController {
         });
     }
 
+    @Override
     public void setServerConnection(ServerConnection connection) {
         this.svConnection = connection;
     }
@@ -58,7 +59,7 @@ public class ChatController {
         // NOTE: the javaFX thread is the one executing this operation.
         // Consider handing this task over to another thread if this one
         // somehow gets blocked for too long.
-        svConnection.send(text);
+        svConnection.sendTextMessage(text);
     }
 
     @FXML

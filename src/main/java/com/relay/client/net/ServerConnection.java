@@ -63,6 +63,10 @@ public class ServerConnection implements Runnable {
         this.onUsernameChosen = handler;
     }
 
+    /**
+     * Awaits new messages from the server.
+     * If there is no connection established, no action is performed.
+     */
     @Override
     public void run() {
         if (socket == null || socket.isClosed()) {
@@ -120,23 +124,17 @@ public class ServerConnection implements Runnable {
         }
     }
 
+    public void loadChatHistory(String chatID) {
+        // TODO: fetch from server
+    }
+
     /**
-     * Sends a message containing messageBody to the server.
+     * Sends a text message to the server.
      * 
-     * The messageBody is wrapped in a Message object which is converted 
-     * to a string formatted as a JSON object and sent over to the client.
-     * 
-     * @param messageBody the message content
+     * @param payload the message payload
      */
-    public void send(String messageBody) {
-        if (socket != null && !socket.isClosed()) {
-            Message message = new Message(messageBody, MessageType.TEXT);
-            String jsonline = gson.toJson(message);
-            serverOut.println(jsonline);
-        } else {
-            System.err.println("Cannot contact server.");
-            notifyServerStatusChange(false);
-        }
+    public void sendTextMessage(String payload) {
+        send(new Message(payload, MessageType.TEXT));
     }
 
     /**
@@ -145,40 +143,38 @@ public class ServerConnection implements Runnable {
      * @param username the username being requested
      */
     public void requestUsername(String username) {
+        send(new Message(username, MessageType.NAME_REQUEST));
+    }
+
+    /**
+     * Asks the server to create a new chat with the user specified.
+     * 
+     * @param otherUser the other user's name
+     */
+    public void createNewChat(String otherUser) {
+        send(new Message(otherUser, MessageType.NEW_CHAT_REQUEST));
+    }
+
+    /**
+     * Sends a request to the server asking to join a chat room.
+     * 
+     * @param chatID the ID of the chat room
+     */
+    public void joinChat(String chatID) {
+        send(new Message(chatID, MessageType.JOIN_CHAT_REQUEST));
+    }
+
+    /**
+     * Sends the specified message to the server over the established socket.
+     */
+    private void send(Message message) {
         if (socket != null && !socket.isClosed()) {
-            Message request = new Message(username, MessageType.NAME_REQUEST);
-            String jsonline = gson.toJson(request);
+            String jsonline = gson.toJson(message);
             serverOut.println(jsonline);
         } else {
             System.err.println("Cannot contact server.");
             notifyServerStatusChange(false);
         }
-    }
-
-    public void createNewChat(String chatName) {
-        if (socket != null && !socket.isClosed()) {
-            Message request = new Message(chatName, MessageType.NEW_CHAT_REQUEST);
-            String jsonline = gson.toJson(request);
-            serverOut.println(jsonline);
-        } else {
-            System.err.println("Cannot contact server.");
-            notifyServerStatusChange(false);
-        }
-    }
-
-    public void joinChat(String chatName) {
-        if (socket != null && !socket.isClosed()) {
-            Message request = new Message(chatName, MessageType.JOIN_CHAT_REQUEST);
-            String jsonline = gson.toJson(request);
-            serverOut.println(jsonline);
-        } else {
-            System.err.println("Cannot contact server.");
-            notifyServerStatusChange(false);
-        }
-    }
-
-    public void loadChatHistory(String chatID) {
-        // TODO: fetch from server
     }
 
     private void handleMessage(Message message) {
@@ -188,6 +184,8 @@ public class ServerConnection implements Runnable {
         }
         state.handleMessage(this, message);
     }
+
+    /* -------------- Notify Methods -------------- */
 
     public void notifyServerStatusChange(Boolean isUp) {
         notify(onServerStatusChange, isUp, "onServerDown");

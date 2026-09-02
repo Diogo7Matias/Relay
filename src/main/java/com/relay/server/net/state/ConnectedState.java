@@ -21,7 +21,7 @@ public class ConnectedState implements ClientState {
                     throw new RelayException(MESSAGE_BODY_MISSING);
                 }
                 handler.processJoinChatRoom(message.getBody());
-                handler.setState(new RoomState());
+                handler.setState(new ChatRoomState());
             }
             default -> System.err.println("Unhandled message type: " + message.getType());
         }

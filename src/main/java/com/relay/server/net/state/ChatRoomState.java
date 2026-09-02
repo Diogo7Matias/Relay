@@ -5,7 +5,7 @@ import static com.relay.server.exceptions.ErrorMessage.MESSAGE_BODY_MISSING;
 import com.relay.server.exceptions.RelayException;
 import com.relay.server.net.ClientHandler;
 
-public class RoomState implements ClientState {
+public class ChatRoomState extends ConnectedState {
     
     @Override
     public void handleMessage(ClientHandler handler, Message message) {
@@ -16,13 +16,7 @@ public class RoomState implements ClientState {
                 }
                 handler.processTextMessage(message.getBody());
             }
-            case NEW_CHAT_REQUEST -> {
-                if (message.getBody() == null || message.getBody().isBlank()) {
-                    throw new RelayException(MESSAGE_BODY_MISSING);
-                }
-                handler.processNewChatRequest(message.getBody());
-            }
-            default -> System.err.println("Unhandled message type: " + message.getType());
+            default -> super.handleMessage(handler, message);
         }
     }
 }

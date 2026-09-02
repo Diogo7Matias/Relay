@@ -15,7 +15,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 
-public class HomepageController {
+public class HomepageController implements ViewController {
 
     private ServerConnection svConnection;
 
@@ -25,6 +25,7 @@ public class HomepageController {
     @FXML
     private ListView<ChatSummary> chatsList;
 
+    @Override
     public void setServerConnection(ServerConnection connection) {
         this.svConnection = connection;
     }

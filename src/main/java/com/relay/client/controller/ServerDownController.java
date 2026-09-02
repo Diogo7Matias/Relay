@@ -4,7 +4,7 @@ import com.relay.client.net.ServerConnection;
 
 import javafx.fxml.FXML;
 
-public class ServerDownController {
+public class ServerDownController implements ViewController {
     
     /**
      * A connection to the server.
@@ -12,6 +12,7 @@ public class ServerDownController {
      */
     private ServerConnection svConnection;
 
+    @Override
     public void setServerConnection(ServerConnection connection) {
         this.svConnection = connection;
     }

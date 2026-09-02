@@ -9,7 +9,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
-public class LoginController {
+public class LoginController implements ViewController {
     
     /**
      * A connection to the server.
@@ -25,6 +25,7 @@ public class LoginController {
     @FXML
     private TextField usernameField;
 
+    @Override
     public void setServerConnection(ServerConnection connection) {
         this.svConnection = connection;
     }

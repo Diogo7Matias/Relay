@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import com.relay.client.controller.HomepageController;
 import com.relay.client.controller.LoginController;
-import com.relay.client.controller.ServerDownController;
+import com.relay.client.controller.ViewController;
 import com.relay.client.model.ChatSummary;
 import com.relay.client.net.ServerConnection;
 
@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 public class ChatClient extends Application {
     private final double SCENE_WIDTH = 1200;
     private final double SCENE_HEIGHT = 900;
+    private final String DEFAULT_TITLE = "Relay Client";
 
     private Stage stage;
     private final ServerConnection svConnection = new ServerConnection();
@@ -52,78 +53,66 @@ public class ChatClient extends Application {
         }
     }
 
-    private void displayLoginView() {
+    /**
+     * Display the view defined in the fxml file provided.
+     * 
+     * @param fxml a path to the fxml file
+     * @param title the title of the view
+     * @return the view controller or null if the method fails to load the view
+     */
+    private <T extends ViewController> T displayView(String fxml, String title) {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
+
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("login.fxml"));
             Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
-            LoginController controller = loader.getController();
+            T controller = loader.getController();
 
             controller.setServerConnection(svConnection);
-            svConnection.setOnUsernameChosen(
-                () -> Platform.runLater(
-                    () -> displayHomeView()
-                )
-            );
-            svConnection.setOnErrorReceived(
-                msg -> Platform.runLater(
-                    () -> controller.displayErrorMessage(msg)
-                )
-            );
             scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
-
-            this.stage.setTitle("Relay - Log In");
+            
+            this.stage.setTitle(title);
             this.stage.setScene(scene);
             this.stage.show();
+            return controller;
         } catch (IOException e) {
-            System.err.println("Failed to load login view.\n" + e.getMessage());
+            System.err.println("Failed to load view <" + fxml + ">: " + e.getMessage());
+            return null;
         }
+    }
+
+    private void displayLoginView() {
+        LoginController controller = displayView("login.fxml", "Relay - Log In");
+        svConnection.setOnUsernameChosen(
+            () -> Platform.runLater(
+                () -> displayHomeView()
+            )
+        );
+        svConnection.setOnErrorReceived(
+            msg -> Platform.runLater(
+                () -> controller.displayErrorMessage(msg)
+            )
+        );
     }
 
     private void displayHomeView() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("homepage.fxml"));
-            Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
-            HomepageController controller = loader.getController();
-
-            controller.setServerConnection(svConnection);
-            svConnection.setOnNewChat(
-                msg -> Platform.runLater(
-                    () -> {
-                        ChatSummary chatSummary = new ChatSummary(msg.getBody());
-                        controller.updateChatsList(chatSummary);
-                    }
-                )
-            );
-            svConnection.setOnJoinChaat(
-                chatID -> Platform.runLater(
-                    () -> controller.openChatSection(chatID)
-                )
-            );
-            scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
-
-            this.stage.setTitle("Relay Client");
-            this.stage.setScene(scene);
-            this.stage.show();
-        } catch (IOException e) {
-            System.err.println("Failed to load homepage view.\n" + e.getMessage());
-        }
+        HomepageController controller = displayView("homepage.fxml", DEFAULT_TITLE);
+        svConnection.setOnNewChat(
+            msg -> Platform.runLater(
+                () -> {
+                    ChatSummary chatSummary = new ChatSummary(msg.getBody());
+                    controller.updateChatsList(chatSummary);
+                }
+            )
+        );
+        svConnection.setOnJoinChaat(
+            chatID -> Platform.runLater(
+                () -> controller.openChatSection(chatID)
+            )
+        );
     }
     
     private void displayServerDownView() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("server-down.fxml"));
-            Scene scene = new Scene(loader.load(), SCENE_WIDTH, SCENE_HEIGHT);
-            ServerDownController controller = loader.getController();
-
-            controller.setServerConnection(svConnection);
-            scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
-
-            this.stage.setTitle("Relay Client");
-            this.stage.setScene(scene);
-            this.stage.show();
-        } catch (IOException e) {
-            System.err.println("Failed to load server-down view.\n" + e.getMessage());
-        }
+        displayView("server-down.fxml", DEFAULT_TITLE);
     }
 
     @Override
