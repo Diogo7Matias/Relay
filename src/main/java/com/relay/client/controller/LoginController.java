@@ -1,8 +1,11 @@
 package com.relay.client.controller;
 
 import com.relay.client.net.ServerConnection;
+import com.relay.client.util.Callbacks;
 import com.relay.protocol.Message;
+import com.relay.protocol.MessageType;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -19,6 +22,8 @@ public class LoginController implements ViewController {
 
     private Node currentErrorNode;
 
+    private Runnable onLoginSuccess;
+
     @FXML
     private VBox page;
 
@@ -30,11 +35,27 @@ public class LoginController implements ViewController {
         this.svConnection = connection;
     }
 
+    public void setOnLoginSuccess(Runnable handler) {
+        this.onLoginSuccess = handler;
+    }
+
     @FXML
     private void handleConfirm() {
         String username = usernameField.getText();
         if (username == null || username.isBlank()) return;
-        svConnection.requestUsername(username);
+        
+        Message request = Message.builder(MessageType.NAME_REQUEST).body(username).build();
+        svConnection.sendRequest(request, response -> Platform.runLater(() -> {
+            switch (response.getType()) {
+                case ACK -> {
+                    if (Callbacks.notify(onLoginSuccess, "onLoginSuccess")) {
+                        svConnection.setUsername(request.getBody());
+                    }
+                }
+                case ERROR -> displayErrorMessage(response);
+                default -> System.err.println("Ignoring message, still in handshake: " + response.getType());
+            }
+        }));
     }
 
     public void displayErrorMessage(Message message) {

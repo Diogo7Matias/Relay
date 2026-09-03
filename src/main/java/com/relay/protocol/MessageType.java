@@ -3,19 +3,15 @@ package com.relay.protocol;
 /**
  * Represents a type of message.
  * 
- * @see NAME_REQUEST 
  * @see TEXT
  * @see ACK
  * @see ERROR
+ * @see NAME_REQUEST 
  * @see NEW_CHAT_REQUEST
- * @see CONNECT_TO_CHAT_REQUEST#JOIN_CHAT_REQUEST
+ * @see JOIN_CHAT_REQUEST
+ * @see CHAT_CREATED
  */
 public enum MessageType {
-
-    /**
-     * A type of message sent by a client requesting a username.
-     */
-    NAME_REQUEST,
 
     /**
      * Represents a text message.
@@ -27,29 +23,36 @@ public enum MessageType {
     /**
      * A type of control message representing an acknowledgement
      * of something related to a previous message.
+     * ACK messages may carry useful information through the body field.
      */
     ACK,
 
     /**
      * Represents an error message.
+     * This type of message shall use the errorMessage field.
      */
     ERROR,
 
     /**
-     * A type of message sent by a client requesting the creation 
-     * of a new chat.
+     * A type of message sent by a client requesting a username.
      */
-    NEW_CHAT_REQUEST,
+    NAME_REQUEST,
 
     /**
-     * The response to a NEW_CHAT_REQUEST.
-     * Should contain the ID of the new chat.
+     * A type of message sent by a client requesting the creation 
+     * of a new chat room.
      */
-    NEW_CHAT_RESPONSE,
+    NEW_CHAT_REQUEST,
 
     /**
      * A type of message representing a client request to join a
      * chat room.
      */
-    JOIN_CHAT_REQUEST
+    JOIN_CHAT_REQUEST,
+
+    /**
+     * A type of message sent by the server to inform a client that
+     * a chat room involving them was created.
+     */
+    CHAT_CREATED
 }

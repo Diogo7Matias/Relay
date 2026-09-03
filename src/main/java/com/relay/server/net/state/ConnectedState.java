@@ -14,13 +14,13 @@ public class ConnectedState implements ClientState {
                 if (message.getBody() == null || message.getBody().isBlank()) {
                     throw new RelayException(MESSAGE_BODY_MISSING);
                 }
-                handler.processNewChatRequest(message.getBody());
+                handler.processNewChatRequest(message.getRequestID(), message.getBody());
             }
             case JOIN_CHAT_REQUEST -> {
                 if (message.getBody() == null || message.getBody().isBlank()) {
                     throw new RelayException(MESSAGE_BODY_MISSING);
                 }
-                handler.processJoinChatRoom(message.getBody());
+                handler.processJoinChatRoom(message.getRequestID(), message.getBody());
                 handler.setState(new ChatRoomState());
             }
             default -> System.err.println("Unhandled message type: " + message.getType());

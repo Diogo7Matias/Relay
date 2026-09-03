@@ -2,10 +2,14 @@ package com.relay.client.controller;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.relay.client.model.ChatSummary;
 import com.relay.client.net.ServerConnection;
+import com.relay.client.util.Callbacks;
 import com.relay.client.view.ChatCell;
+import com.relay.protocol.Message;
+import com.relay.protocol.MessageType;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -19,6 +23,9 @@ public class HomepageController implements ViewController {
 
     private ServerConnection svConnection;
 
+    private Consumer<String> onNewChat;
+    private Consumer<String> onJoinChat;
+
     @FXML
     private BorderPane borderPane;
 
@@ -28,6 +35,14 @@ public class HomepageController implements ViewController {
     @Override
     public void setServerConnection(ServerConnection connection) {
         this.svConnection = connection;
+    }
+
+    public void setOnNewChat(Consumer<String> handler) {
+        this.onNewChat = handler;
+    }
+
+    public void setOnJoinChat(Consumer<String> handler) {
+        this.onJoinChat = handler;
     }
 
     @FXML
@@ -48,17 +63,36 @@ public class HomepageController implements ViewController {
         dialog.setContentText("Enter Chat Name:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(chatName -> {
-            newChat(chatName);
-        });
+        result.ifPresent(chatName -> newChat(chatName));
     }
 
-    private void newChat(String chatName) {
-        svConnection.createNewChat(chatName);
+    private void newChat(String otherUser) {
+        Message request = Message.builder(MessageType.NEW_CHAT_REQUEST)
+            .body(otherUser)
+            .build();
+
+        svConnection.sendRequest(request, response -> Platform.runLater(() -> {
+            switch (response.getType()) {
+                case ACK -> Callbacks.notify(onNewChat, response.getBody(), "onNewChat");
+                case ERROR -> System.err.println(response.getErrorMessage());
+                default -> System.err.println("Unhandled message type: " + response.getType());
+            }
+        }));
     }
 
     private void joinChat(ChatSummary chatSummary) {
-        svConnection.joinChat(chatSummary.getDisplayName());
+        String chatID = chatSummary.getChatID();
+        Message request = Message.builder(MessageType.JOIN_CHAT_REQUEST)
+            .body(chatID)
+            .build();
+
+        svConnection.sendRequest(request, response -> Platform.runLater(() -> {
+            switch (response.getType()) {
+                case ACK -> Callbacks.notify(onJoinChat, response.getBody(), "onJoinChat");
+                case ERROR -> System.err.println(response.getErrorMessage());
+                default -> System.err.println("Unhandled message type: " + response.getType());
+            }
+        }));
     }
 
     public void updateChatsList(ChatSummary chatSummary) {
@@ -72,11 +106,7 @@ public class HomepageController implements ViewController {
             ChatController controller = loader.getController();
 
             controller.setServerConnection(svConnection);
-            svConnection.setOnMessageReceived(
-                msg -> Platform.runLater(
-                    () -> controller.updateChatHistory(msg)
-                )
-            );
+            svConnection.setOnMessageReceived(msg -> Platform.runLater(() -> controller.updateChatHistory(msg)));
             svConnection.loadChatHistory(chatID);
 
             borderPane.setCenter(chatView);

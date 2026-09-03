@@ -6,8 +6,6 @@ import java.net.Socket;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.relay.protocol.Message;
-import com.relay.protocol.MessageType;
 import static com.relay.server.exceptions.ErrorMessage.USERNAME_ALREADY_EXISTS;
 import static com.relay.server.exceptions.ErrorMessage.USER_NOT_FOUND;
 import com.relay.server.exceptions.RelayException;
@@ -65,7 +63,7 @@ public class ChatServer {
         }
     }
 
-    public void newRoom(ClientHandler requester, String otherUser) {
+    public ChatRoom newRoom(ClientHandler requester, String otherUser) {
         ClientHandler otherUserHandler = null;
 
         for (ClientHandler h : handlers.keySet()) {
@@ -79,16 +77,15 @@ public class ChatServer {
         }
 
         if (otherUserHandler.equals(requester)) {
-            return; // ignore
+            return null; // ignore
         }
 
-        ChatRoom room = new ChatRoom();
-        room.addHandler(otherUserHandler);
-        room.addHandler(requester);
+        ChatRoom newRoom = new ChatRoom();
+        newRoom.addHandler(otherUserHandler);
+        newRoom.addHandler(requester);
 
-        Message roomID = new Message(room.getID(), MessageType.NEW_CHAT_RESPONSE);
-        room.broadcast(roomID);
-        this.rooms.add(room);
+        this.rooms.add(newRoom);
+        return newRoom;
     }
 
     public void joinChatRoom(ClientHandler requester, String roomID) {

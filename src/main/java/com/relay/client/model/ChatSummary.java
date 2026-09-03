@@ -1,14 +1,14 @@
 package com.relay.client.model;
 
 public class ChatSummary {
-    private final String displayName;
+    private final String chatID;
     // ...
 
-    public ChatSummary(String displayName) {
-        this.displayName = displayName;
+    public ChatSummary(String chatID) {
+        this.chatID = chatID;
     }
 
-    public String getDisplayName() {
-        return this.displayName;
+    public String getChatID() {
+        return this.chatID;
     }
 }

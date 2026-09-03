@@ -5,12 +5,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.relay.client.net.state.ConnectionState;
-import com.relay.client.net.state.HandshakeState;
+import com.relay.client.util.Callbacks;
 import com.relay.protocol.Message;
 import com.relay.protocol.MessageAdapter;
 import com.relay.protocol.MessageType;
@@ -28,16 +30,19 @@ public class ServerConnection implements Runnable {
 
     private Consumer<Boolean> onServerStatusChange;
     private Consumer<Message> onMessageReceived;
-    private Consumer<Message> onErrorReceived;
-    private Consumer<Message> onNewChat;
-    private Consumer<String> onJoinChat;
-    private Runnable onUsernameChosen;
+    private Consumer<String> onChatCreated;
 
-    private ConnectionState state = new HandshakeState();
+    private String username;
 
-    public void setState(ConnectionState state) {
-        this.state = state;
+    public String getUsername() {
+        return this.username;
     }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    private final Map<UUID, Consumer<Message>> pendingRequests = new ConcurrentHashMap<>();
 
     public void setOnServerStatusChange(Consumer<Boolean> handler) {
         this.onServerStatusChange = handler;
@@ -46,21 +51,9 @@ public class ServerConnection implements Runnable {
     public void setOnMessageReceived(Consumer<Message> handler) {
         this.onMessageReceived = handler;
     }
-
-    public void setOnErrorReceived(Consumer<Message> handler) {
-        this.onErrorReceived = handler;
-    }
-
-    public void setOnNewChat(Consumer<Message> handler) {
-        this.onNewChat = handler;
-    }
-
-    public void setOnJoinChaat(Consumer<String> handler) {
-        this.onJoinChat = handler;
-    }
-
-    public void setOnUsernameChosen(Runnable handler) {
-        this.onUsernameChosen = handler;
+    
+    public void setOnChatCreated(Consumer<String> handler) {
+        this.onChatCreated = handler;
     }
 
     /**
@@ -113,7 +106,6 @@ public class ServerConnection implements Runnable {
      * Closes the socket used to contact the server if it is open.
      */
     public void closeConnection() {
-        setState(new HandshakeState());
         try {
             System.out.println("Closing connection...");
             if (socket != null && !socket.isClosed()) {
@@ -130,102 +122,72 @@ public class ServerConnection implements Runnable {
 
     /**
      * Sends a text message to the server.
+     * This message is not a request so it will not wait for a response.
      * 
      * @param payload the message payload
      */
     public void sendTextMessage(String payload) {
-        send(new Message(payload, MessageType.TEXT));
+        send(Message.builder(MessageType.TEXT).body(payload).build());
     }
 
     /**
-     * Requests a username from the server to identify this client.
+     * Sends a request to the server.
      * 
-     * @param username the username being requested
+     * @param request the request message
+     * @param onResponse a callback function to execute when the response arrives
      */
-    public void requestUsername(String username) {
-        send(new Message(username, MessageType.NAME_REQUEST));
-    }
-
-    /**
-     * Asks the server to create a new chat with the user specified.
-     * 
-     * @param otherUser the other user's name
-     */
-    public void createNewChat(String otherUser) {
-        send(new Message(otherUser, MessageType.NEW_CHAT_REQUEST));
-    }
-
-    /**
-     * Sends a request to the server asking to join a chat room.
-     * 
-     * @param chatID the ID of the chat room
-     */
-    public void joinChat(String chatID) {
-        send(new Message(chatID, MessageType.JOIN_CHAT_REQUEST));
+    public void sendRequest(Message request, Consumer<Message> onResponse) {
+        if (send(request)) {
+            pendingRequests.put(request.getRequestID(), onResponse);
+        }
     }
 
     /**
      * Sends the specified message to the server over the established socket.
      */
-    private void send(Message message) {
+    private boolean send(Message message) {
         if (socket != null && !socket.isClosed()) {
             String jsonline = gson.toJson(message);
             serverOut.println(jsonline);
+            return true;
         } else {
             System.err.println("Cannot contact server.");
             notifyServerStatusChange(false);
+            return false;
         }
     }
 
     private void handleMessage(Message message) {
-        if (message.getType() == null) { // should not happen
-            System.err.println("Invalid message format from server.");
-            return;
+        UUID requestID = message.getRequestID();
+
+        if (isPending(requestID)) {
+            Consumer<Message> callback = pendingRequests.remove(requestID);
+            callback.accept(message);
+        } else {
+            // messages that are not replies to client requests
+            switch (message.getType()) {
+                case TEXT -> notifyMessageReceived(message);
+                case CHAT_CREATED -> notifyChatCreated(message.getBody());
+                default -> System.err.println("Ignoring unknown message.");
+            }
         }
-        state.handleMessage(this, message);
+    }
+
+    private boolean isPending(UUID requestID) {
+        return requestID != null && pendingRequests.containsKey(requestID);
     }
 
     /* -------------- Notify Methods -------------- */
 
     public void notifyServerStatusChange(Boolean isUp) {
-        notify(onServerStatusChange, isUp, "onServerDown");
+        Callbacks.notify(onServerStatusChange, isUp, "onServerDown");
     }
 
     public void notifyMessageReceived(Message message) {
-        notify(onMessageReceived, message, "onMessageReceived");
+        Callbacks.notify(onMessageReceived, message, "onMessageReceived");
     }
 
-    public void notifyErrorReceived(Message message) {
-        notify(onErrorReceived, message, "onErrorReceived");
-    }
-
-    public void notifyNewChat(Message message) {
-        notify(onNewChat, message, "onNewChat");
-    }
-
-    public void notifyJoinChat(String chatID) {
-        notify(onJoinChat, chatID, "onJoinChat");
-    }
-
-    public void notifyUsernameChosen() {
-        notify(onUsernameChosen, "onUsernameChosen");
-    }
-
-    /* helper method to notify a consumer */
-    private <T> void notify(Consumer<T> handler, T arg, String handlerName) {
-        if (handler != null) {
-            handler.accept(arg);
-        } else {
-            System.err.println(handlerName + " not specified.");
-        }
-    }
-
-    /* helper method to notify a runnable */
-    private void notify(Runnable handler, String handlerName) {
-        if (handler != null) {
-            handler.run();
-        } else {
-            System.err.println(handlerName + " not specified.");
-        }
+    public void notifyChatCreated(String chatID) {
+        Callbacks.notify(onChatCreated, chatID, "onChatCreated");
     }
 }

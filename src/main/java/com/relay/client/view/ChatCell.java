@@ -17,7 +17,7 @@ public class ChatCell extends ListCell<ChatSummary> {
             return;
         }
 
-        Label chatNameLabel = new Label(chatSummary.getDisplayName());
+        Label chatNameLabel = new Label(chatSummary.getChatID());
         HBox container = new HBox(chatNameLabel);
 
         chatNameLabel.getStyleClass().add("chat-entry-name");

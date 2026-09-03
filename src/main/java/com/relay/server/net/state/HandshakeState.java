@@ -14,7 +14,7 @@ public class HandshakeState implements ClientState {
                 if (message.getBody() == null || message.getBody().isBlank()) {
                     throw new RelayException(MESSAGE_BODY_MISSING);
                 }
-                handler.processUsernameRequest(message.getBody());
+                handler.processUsernameRequest(message.getRequestID(), message.getBody());
                 handler.setState(new ConnectedState());
             }
             default -> System.err.println("Unhandled message type: " + message.getType());

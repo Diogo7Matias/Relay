@@ -34,9 +34,29 @@ public class ChatRoom {
         handler.setChatRoom(null);
     }
 
+    /**
+     * Broadcast a message to all clients participating in this chat room.
+     * 
+     * @param message the message to be sent
+     */
     public void broadcast(Message message) {
         for (ClientHandler h : handlers) {
             h.sendMessage(message);
+        }
+    }
+
+    /**
+     * Broadcast a message to all clients participating in this chat room
+     * except the client specified.
+     * 
+     * @param message the message to be sent
+     * @param handler the client that will not receive the message
+     */
+    public void broadcastExcept(Message message, ClientHandler handler) {
+        for (ClientHandler h : handlers) {
+            if (!h.equals(handler)) {
+                h.sendMessage(message);
+            }
         }
     }
 }

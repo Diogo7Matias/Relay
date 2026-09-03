@@ -1,6 +1,7 @@
 package com.relay.client;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import com.relay.client.controller.HomepageController;
 import com.relay.client.controller.LoginController;
@@ -82,33 +83,20 @@ public class ChatClient extends Application {
 
     private void displayLoginView() {
         LoginController controller = displayView("login.fxml", "Relay - Log In");
-        svConnection.setOnUsernameChosen(
-            () -> Platform.runLater(
-                () -> displayHomeView()
-            )
-        );
-        svConnection.setOnErrorReceived(
-            msg -> Platform.runLater(
-                () -> controller.displayErrorMessage(msg)
-            )
-        );
+        controller.setOnLoginSuccess(() -> Platform.runLater(() -> displayHomeView()));
     }
 
     private void displayHomeView() {
         HomepageController controller = displayView("homepage.fxml", DEFAULT_TITLE);
-        svConnection.setOnNewChat(
-            msg -> Platform.runLater(
-                () -> {
-                    ChatSummary chatSummary = new ChatSummary(msg.getBody());
-                    controller.updateChatsList(chatSummary);
-                }
-            )
+        
+        Consumer<String> newChatCallback = chatID -> Platform.runLater(() -> {
+                ChatSummary chatSummary = new ChatSummary(chatID);
+                controller.updateChatsList(chatSummary);
+            }
         );
-        svConnection.setOnJoinChaat(
-            chatID -> Platform.runLater(
-                () -> controller.openChatSection(chatID)
-            )
-        );
+        controller.setOnNewChat(newChatCallback);
+        svConnection.setOnChatCreated(newChatCallback);
+        controller.setOnJoinChat(chatID -> Platform.runLater(() -> controller.openChatSection(chatID)));
     }
     
     private void displayServerDownView() {

@@ -1,85 +1,96 @@
 package com.relay.protocol;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class Message {
-    private final String sender;
-    private final String body;
-    private final Instant timestamp;
     private final MessageType type;
+    private final UUID requestID;
+    private final String body;
+    private final String sender;
+    private final Instant timestamp;
     private final String errorMessage;
 
     private static final Gson gson = new GsonBuilder()
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
                                         .create();
 
-    /**
-     * This constructor is meant to be used by the server when
-     * broadcasting a message to its clients.
-     */
-    public Message(String sender, String body, Instant timestamp) {
-        this.sender = sender;
-        this.body = body;
-        this.timestamp = timestamp;
-        this.type = MessageType.TEXT;
-        this.errorMessage = null;
+    private Message(Builder builder) {
+        this.type = builder.type;
+        this.requestID = builder.requestID != null ? builder.requestID : UUID.randomUUID();
+        this.body = builder.body;
+        this.sender = builder.sender;
+        this.timestamp = builder.timestamp;
+        this.errorMessage = builder.errorMessage;
     }
 
-    /**
-     * This constructor's main purpose is letting a client create
-     * a message of the type NAME_REQUEST since they need only
-     * specify the body and type.
-     */
-    public Message(String body, MessageType type) {
-        this.sender = null;
-        this.body = body;
-        this.timestamp = null;
-        this.type = type;
-        this.errorMessage = null;
+    public static Builder builder(MessageType type) {
+        return new Builder(type);
     }
 
-    /**
-     * This constructor can be used by both a client and a server.
-     * It is mostly used to construct messages of the type ACK
-     * since that message type requires no other fields.
-     */
-    public Message(MessageType type) {
-        this.sender = null;
-        this.body = null;
-        this.timestamp = null;
-        this.type = type;
-        this.errorMessage = null;
+    public static class Builder {
+        private final MessageType type;
+        private UUID requestID;
+        private String body;
+        private String sender;
+        private Instant timestamp;
+        private String errorMessage;
+
+        private Builder(MessageType type) {
+            this.type = type;
+        }
+
+        public Builder requestID(UUID requestID) {
+            this.requestID = requestID;
+            return this;
+        }
+        
+        public Builder body(String body) {
+            this.body = body;
+            return this;
+        }
+
+        public Builder sender(String sender) {
+            this.sender = sender;
+            return this;
+        }
+
+        public Builder timestamp(Instant timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder errorMessage(String errorMessage) {
+            this.errorMessage = errorMessage;
+            return this;
+        }
+
+        public Message build() {
+            return new Message(this);
+        }
     }
 
-    /**
-     * This constructor's purpose is to create messages of the type ERROR
-     * by specifying the errorMessage.
-     */
-    public Message(String errorMessage) {
-        this.sender = null;
-        this.body = null;
-        this.timestamp = null;
-        this.type = MessageType.ERROR;
-        this.errorMessage = errorMessage;
+    public MessageType getType() {
+        return this.type;
+    }
+
+    public UUID getRequestID() {
+        return this.requestID;
+    }
+    
+    public String getBody() {
+        return this.body;
     }
 
     public String getSender() {
         return this.sender;
     }
 
-    public String getBody() {
-        return this.body;
-    }
-
     public Instant getTimestamp() {
         return this.timestamp;
-    }
-
-    public MessageType getType() {
-        return this.type;
     }
 
     public String getErrorMessage() {

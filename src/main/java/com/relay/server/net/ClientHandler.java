@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.Instant;
+import java.util.UUID;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -83,8 +84,10 @@ public class ClientHandler implements Runnable {
                 try {
                     handleMessage(message);
                 } catch (RelayException e) {
-                    Message errorMsg = new Message(e.getErrorMessage().label);
-                    sendMessage(errorMsg);
+                    sendMessage(Message.builder(MessageType.ERROR)
+                        .requestID(message.getRequestID())
+                        .errorMessage(e.getErrorMessage().label)
+                        .build());
                 }
             }
         } catch (IOException e) {
@@ -129,23 +132,42 @@ public class ClientHandler implements Runnable {
     }
 
     public void processTextMessage(String messageBody) {
-        Message textMessage = new Message(this.username, messageBody, Instant.now());
-        room.broadcast(textMessage);
+        Message message = Message.builder(MessageType.TEXT)
+            .body(messageBody)
+            .sender(this.username)
+            .timestamp(Instant.now())
+            .build();
+        room.broadcast(message);
     }
 
-    public void processUsernameRequest(String username) {
+    public void processUsernameRequest(UUID requestID, String username) {
+        Message ack = Message.builder(MessageType.ACK)
+            .requestID(requestID)
+            .build();
         setUsername(username);
-        Message ack = new Message(MessageType.ACK);
         sendMessage(ack);
     }
 
-    public void processNewChatRequest(String otherUser) {
-        this.chatServer.newRoom(this, otherUser);
+    public void processNewChatRequest(UUID requestID, String otherUser) {
+        ChatRoom newRoom = this.chatServer.newRoom(this, otherUser);
+        if (newRoom != null) {
+            Message ack = Message.builder(MessageType.ACK)
+                .requestID(requestID)
+                .body(room.getID())
+                .build();
+            Message chatCreated = Message.builder(MessageType.CHAT_CREATED)
+                .body(room.getID())
+                .build();
+            sendMessage(ack);
+            newRoom.broadcastExcept(chatCreated, this);
+        }
     }
 
-    public void processJoinChatRoom(String roomID) {
+    public void processJoinChatRoom(UUID requestID, String roomID) {
         this.chatServer.joinChatRoom(this, roomID);
-        Message ack = new Message(MessageType.ACK);
+        Message ack = Message.builder(MessageType.ACK)
+            .requestID(requestID)
+            .build();
         sendMessage(ack);
     }
 }
