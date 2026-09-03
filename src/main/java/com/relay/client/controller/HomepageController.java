@@ -82,7 +82,7 @@ public class HomepageController implements ViewController {
         svConnection.sendRequest(request, response -> Platform.runLater(() -> {
             switch (response.getType()) {
                 case ACK -> Callbacks.notify(onNewChat, response.getBody(), "onNewChat");
-                case ERROR -> System.err.println(response.getErrorMessage());
+                case ERROR -> System.err.println(response.getBody());
                 default -> System.err.println("Unhandled message type: " + response.getType());
             }
         }));
@@ -97,7 +97,7 @@ public class HomepageController implements ViewController {
         svConnection.sendRequest(request, response -> Platform.runLater(() -> {
             switch (response.getType()) {
                 case ACK -> Callbacks.notify(onJoinChat, response.getBody(), "onJoinChat");
-                case ERROR -> System.err.println(response.getErrorMessage());
+                case ERROR -> System.err.println(response.getBody());
                 default -> System.err.println("Unhandled message type: " + response.getType());
             }
         }));

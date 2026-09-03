@@ -86,7 +86,7 @@ public class ClientHandler implements Runnable {
                 } catch (RelayException e) {
                     sendMessage(Message.builder(MessageType.ERROR)
                         .requestID(message.getRequestID())
-                        .errorMessage(e.getErrorMessage().label)
+                        .body(e.getErrorMessage().label)
                         .build());
                 }
             }

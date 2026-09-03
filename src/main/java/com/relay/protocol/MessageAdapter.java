@@ -27,7 +27,6 @@ public class MessageAdapter extends TypeAdapter<Message> {
         out.name("body").value(value.getBody());
         out.name("sender").value(value.getSender());
         out.name("timestamp").value(timestampValue);
-        out.name("errorMessage").value(value.getErrorMessage());
         out.endObject();
     }
 
@@ -38,7 +37,6 @@ public class MessageAdapter extends TypeAdapter<Message> {
         String body = null;
         String sender = null;
         Instant timestamp = null;
-        String errorMessage = null;
 
         in.beginObject();
         while (in.hasNext()) {
@@ -49,7 +47,6 @@ public class MessageAdapter extends TypeAdapter<Message> {
                 case "body" -> body = in.nextString();
                 case "sender" -> sender = in.nextString();
                 case "timestamp" -> timestamp = Instant.parse(in.nextString());
-                case "errorMessage" -> errorMessage = in.nextString();
                 default -> in.skipValue(); // ignore unknown fields
             }
         }
@@ -64,7 +61,6 @@ public class MessageAdapter extends TypeAdapter<Message> {
             .body(body)
             .sender(sender)
             .timestamp(timestamp)
-            .errorMessage(errorMessage)
             .build();
     }
 }

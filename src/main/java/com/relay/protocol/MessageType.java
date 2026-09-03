@@ -29,7 +29,7 @@ public enum MessageType {
 
     /**
      * Represents an error message.
-     * This type of message shall use the errorMessage field.
+     * This type of message shall contain in its body field an error message.
      */
     ERROR,
 

@@ -12,7 +12,6 @@ public class Message {
     private final String body;
     private final String sender;
     private final Instant timestamp;
-    private final String errorMessage;
 
     private static final Gson gson = new GsonBuilder()
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
@@ -24,7 +23,6 @@ public class Message {
         this.body = builder.body;
         this.sender = builder.sender;
         this.timestamp = builder.timestamp;
-        this.errorMessage = builder.errorMessage;
     }
 
     public static Builder builder(MessageType type) {
@@ -37,7 +35,6 @@ public class Message {
         private String body;
         private String sender;
         private Instant timestamp;
-        private String errorMessage;
 
         private Builder(MessageType type) {
             this.type = type;
@@ -60,11 +57,6 @@ public class Message {
 
         public Builder timestamp(Instant timestamp) {
             this.timestamp = timestamp;
-            return this;
-        }
-
-        public Builder errorMessage(String errorMessage) {
-            this.errorMessage = errorMessage;
             return this;
         }
 
@@ -91,10 +83,6 @@ public class Message {
 
     public Instant getTimestamp() {
         return this.timestamp;
-    }
-
-    public String getErrorMessage() {
-        return this.errorMessage;
     }
 
     @Override

@@ -59,7 +59,7 @@ public class LoginController implements ViewController {
     }
 
     public void displayErrorMessage(Message message) {
-        String errorStr = message.getErrorMessage();
+        String errorStr = message.getBody();
         if (currentErrorNode != null) {
             this.page.getChildren().remove(currentErrorNode);
         }
