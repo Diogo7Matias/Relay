@@ -15,6 +15,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
@@ -30,6 +31,9 @@ public class HomepageController implements ViewController {
     private BorderPane borderPane;
 
     @FXML
+    private Label username;
+
+    @FXML
     private ListView<ChatSummary> chatsList;
 
     @Override
@@ -43,6 +47,10 @@ public class HomepageController implements ViewController {
 
     public void setOnJoinChat(Consumer<String> handler) {
         this.onJoinChat = handler;
+    }
+
+    public void setUsernameLabel() {
+        this.username.setText(svConnection.getUsername());
     }
 
     @FXML

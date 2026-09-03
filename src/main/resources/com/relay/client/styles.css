@@ -24,6 +24,10 @@
     -fx-font-size: 32px;
 }
 
+.light-text {
+    -fx-opacity: 0.5;
+}
+
 .button {
     -fx-background-color: -dark-grey;
     -fx-padding: 8px 16px;
@@ -78,6 +82,18 @@
 .sidebar {
     -fx-border-color: -medium-grey;
     -fx-border-width: 0 2px 0 0;
+}
+
+.topContainer {
+    -fx-padding: 8px 20px;
+}
+
+.topContainer-username {
+    -fx-font-size: 18px;
+}
+
+.topContainer .button {
+    -fx-padding: 6px 12px;
 }
 
 .sidebar .separator {

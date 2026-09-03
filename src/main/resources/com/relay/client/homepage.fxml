@@ -2,6 +2,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Button?>
@@ -12,14 +14,24 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.relay.client.controller.HomepageController">
     <left>
-        <VBox alignment="CENTER" spacing="8" styleClass="sidebar">
-            <Button text="New Chat" onAction="#showPrompt" styleClass="button-highlight">
-                <VBox.margin>
-                    <Insets top="12"/>
-                </VBox.margin>
-            </Button>
-            <Separator/>
-            <ListView fx:id="chatsList" maxWidth="Infinity" maxHeight="Infinity" VBox.vgrow="ALWAYS"/>
+        <VBox alignment="CENTER" spacing="2" styleClass="sidebar">
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="20" maxWidth="Infinity" styleClass="topContainer">
+                    <VBox>
+                        <Label text="Logged in as:" styleClass="light-text"/>
+                        <Label fx:id="username" styleClass="topContainer-username"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="New Chat" onAction="#showPrompt" styleClass="button-highlight"/>
+                </HBox>
+                <Separator/>
+                <Label text="Chat Rooms" styleClass="light-text">
+                    <VBox.margin>
+                        <Insets top="6"/>
+                    </VBox.margin>
+                </Label>
+                <ListView fx:id="chatsList" maxWidth="Infinity" maxHeight="Infinity" VBox.vgrow="ALWAYS"/>
+            </children>
         </VBox>
     </left>
     <center>

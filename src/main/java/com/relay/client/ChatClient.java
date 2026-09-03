@@ -94,9 +94,11 @@ public class ChatClient extends Application {
                 controller.updateChatsList(chatSummary);
             }
         );
+
+        controller.setUsernameLabel();
         controller.setOnNewChat(newChatCallback);
-        svConnection.setOnChatCreated(newChatCallback);
         controller.setOnJoinChat(chatID -> Platform.runLater(() -> controller.openChatSection(chatID)));
+        svConnection.setOnChatCreated(newChatCallback);
     }
     
     private void displayServerDownView() {
