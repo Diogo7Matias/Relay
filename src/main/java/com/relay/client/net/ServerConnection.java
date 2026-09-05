@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.relay.client.model.ChatSummary;
 import com.relay.client.util.Callbacks;
 import com.relay.protocol.Message;
 import com.relay.protocol.MessageAdapter;
@@ -30,7 +31,7 @@ public class ServerConnection implements Runnable {
 
     private Consumer<Boolean> onServerStatusChange;
     private Consumer<Message> onMessageReceived;
-    private Consumer<String> onChatCreated;
+    private Consumer<ChatSummary> onChatCreated;
 
     private String username;
 
@@ -52,7 +53,7 @@ public class ServerConnection implements Runnable {
         this.onMessageReceived = handler;
     }
     
-    public void setOnChatCreated(Consumer<String> handler) {
+    public void setOnChatCreated(Consumer<ChatSummary> handler) {
         this.onChatCreated = handler;
     }
 
@@ -167,7 +168,7 @@ public class ServerConnection implements Runnable {
             // messages that are not replies to client requests
             switch (message.getType()) {
                 case TEXT -> notifyMessageReceived(message);
-                case CHAT_CREATED -> notifyChatCreated(message.getBody());
+                case CHAT_CREATED -> notifyChatCreated(new ChatSummary(message.getBody(), message.getSender()));
                 default -> System.err.println("Ignoring unknown message.");
             }
         }
@@ -187,7 +188,7 @@ public class ServerConnection implements Runnable {
         Callbacks.notify(onMessageReceived, message, "onMessageReceived");
     }
 
-    public void notifyChatCreated(String chatID) {
-        Callbacks.notify(onChatCreated, chatID, "onChatCreated");
+    public void notifyChatCreated(ChatSummary chatSummary) {
+        Callbacks.notify(onChatCreated, chatSummary, "onChatCreated");
     }
 }

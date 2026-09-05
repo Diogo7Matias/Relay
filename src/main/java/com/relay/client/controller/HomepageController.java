@@ -24,7 +24,7 @@ public class HomepageController implements ViewController {
 
     private ServerConnection svConnection;
 
-    private Consumer<String> onNewChat;
+    private Consumer<ChatSummary> onNewChat;
     private Consumer<String> onJoinChat;
 
     @FXML
@@ -41,7 +41,7 @@ public class HomepageController implements ViewController {
         this.svConnection = connection;
     }
 
-    public void setOnNewChat(Consumer<String> handler) {
+    public void setOnNewChat(Consumer<ChatSummary> handler) {
         this.onNewChat = handler;
     }
 
@@ -81,7 +81,10 @@ public class HomepageController implements ViewController {
 
         svConnection.sendRequest(request, response -> Platform.runLater(() -> {
             switch (response.getType()) {
-                case ACK -> Callbacks.notify(onNewChat, response.getBody(), "onNewChat");
+                case ACK -> {
+                    ChatSummary chatSummary = new ChatSummary(response.getBody(), request.getBody());
+                    Callbacks.notify(onNewChat, chatSummary, "onNewChat");
+                }
                 case ERROR -> System.err.println(response.getBody());
                 default -> System.err.println("Unhandled message type: " + response.getType());
             }

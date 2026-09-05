@@ -89,8 +89,7 @@ public class ChatClient extends Application {
     private void displayHomeView() {
         HomepageController controller = displayView("homepage.fxml", DEFAULT_TITLE);
         
-        Consumer<String> newChatCallback = chatID -> Platform.runLater(() -> {
-                ChatSummary chatSummary = new ChatSummary(chatID);
+        Consumer<ChatSummary> newChatCallback = chatSummary -> Platform.runLater(() -> {
                 controller.updateChatsList(chatSummary);
             }
         );
