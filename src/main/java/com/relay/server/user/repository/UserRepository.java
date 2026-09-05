@@ -61,4 +61,22 @@ public class UserRepository {
             return Optional.empty();
         }
     }
+
+    public Optional<User> findByID(UUID id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, id.toString());
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                User user = new User(UUID.fromString(rs.getString("id")), rs.getString("username"));
+                return Optional.of(user);
+            } else {
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            System.err.println("Failed to query user.\n" + e.getMessage());
+            return Optional.empty();
+        }
+    }
 }

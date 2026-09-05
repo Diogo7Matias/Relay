@@ -83,7 +83,9 @@ public class HomepageController implements ViewController {
             switch (response.getType()) {
                 case ACK -> {
                     ChatSummary chatSummary = new ChatSummary(response.getBody(), request.getBody());
-                    Callbacks.notify(onNewChat, chatSummary, "onNewChat");
+                    if (!Callbacks.notify(onNewChat, chatSummary)) {
+                        System.err.println("onNewChat not specified");
+                    }
                 }
                 case ERROR -> System.err.println(response.getBody());
                 default -> System.err.println("Unhandled message type: " + response.getType());
@@ -99,7 +101,11 @@ public class HomepageController implements ViewController {
 
         svConnection.sendRequest(request, response -> Platform.runLater(() -> {
             switch (response.getType()) {
-                case ACK -> Callbacks.notify(onJoinChat, response.getBody(), "onJoinChat");
+                case ACK -> {
+                    if (!Callbacks.notify(onJoinChat, response.getBody())) {
+                        System.err.println("onJoinChat not specified");
+                    }
+                }
                 case ERROR -> System.err.println(response.getBody());
                 default -> System.err.println("Unhandled message type: " + response.getType());
             }

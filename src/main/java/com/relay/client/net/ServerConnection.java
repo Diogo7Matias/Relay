@@ -6,8 +6,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Map;
+import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 import com.google.gson.Gson;
@@ -33,6 +35,9 @@ public class ServerConnection implements Runnable {
     private Consumer<Message> onMessageReceived;
     private Consumer<ChatSummary> onChatCreated;
 
+    private final Map<UUID, Consumer<Message>> pendingRequests = new ConcurrentHashMap<>();
+    private final Queue<Message> bufferedMessages = new ConcurrentLinkedQueue<>();
+
     private String username;
 
     public String getUsername() {
@@ -43,14 +48,16 @@ public class ServerConnection implements Runnable {
         this.username = username;
     }
 
-    private final Map<UUID, Consumer<Message>> pendingRequests = new ConcurrentHashMap<>();
-
     public void setOnServerStatusChange(Consumer<Boolean> handler) {
         this.onServerStatusChange = handler;
     }
 
     public void setOnMessageReceived(Consumer<Message> handler) {
         this.onMessageReceived = handler;
+        Message queued;
+        while ((queued = bufferedMessages.poll()) != null) {
+            handler.accept(queued);
+        }
     }
     
     public void setOnChatCreated(Consumer<ChatSummary> handler) {
@@ -177,14 +184,20 @@ public class ServerConnection implements Runnable {
     /* -------------- Notify Methods -------------- */
 
     public void notifyServerStatusChange(Boolean isUp) {
-        Callbacks.notify(onServerStatusChange, isUp, "onServerDown");
+        if(!Callbacks.notify(onServerStatusChange, isUp)) {
+            System.err.println("onServerDown not specified");
+        }
     }
 
     public void notifyMessageReceived(Message message) {
-        Callbacks.notify(onMessageReceived, message, "onMessageReceived");
+        if (!Callbacks.notify(onMessageReceived, message)) {
+            bufferedMessages.add(message);
+        }
     }
 
     public void notifyChatCreated(ChatSummary chatSummary) {
-        Callbacks.notify(onChatCreated, chatSummary, "onChatCreated");
+        if (!Callbacks.notify(onChatCreated, chatSummary)) {
+            System.err.println("onChatCreated not specified");
+        }
     }
 }

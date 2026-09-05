@@ -8,26 +8,22 @@ public final class Callbacks {
     /**
      * Notify a Consumer 
      */
-    public static <T> boolean notify(Consumer<T> handler, T arg, String handlerName) {
+    public static <T> boolean notify(Consumer<T> handler, T arg) {
         if (handler != null) {
             handler.accept(arg);
             return true;
-        } else {
-            System.err.println(handlerName + " not specified.");
-            return false;
         }
+        return false;
     }
 
     /**
      * Notify a Runnable
      */
-    public static boolean notify(Runnable handler, String handlerName) {
+    public static boolean notify(Runnable handler) {
         if (handler != null) {
             handler.run();
             return true;
-        } else {
-            System.err.println(handlerName + " not specified.");
-            return false;
         }
+        return false;
     }
 }

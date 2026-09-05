@@ -190,9 +190,10 @@ public class ClientHandler implements Runnable, ClientConnection {
         // fetch all chat messages and send them to the client
         List<TextMessage> textMessages = messageService.findAllChatRoomMessages(roomID);
         textMessages.forEach(textMsg -> {
+            String username = userService.getUsernameByID(textMsg.getSenderID());
             Message message = Message.builder(MessageType.TEXT)
                     .body(textMsg.getBody())
-                    .sender(textMsg.getSenderID().toString())
+                    .sender(username)
                     .timestamp(textMsg.getTimestamp())
                     .build();
             sendMessage(message);

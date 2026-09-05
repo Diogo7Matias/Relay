@@ -48,8 +48,10 @@ public class LoginController implements ViewController {
         svConnection.sendRequest(request, response -> Platform.runLater(() -> {
             switch (response.getType()) {
                 case ACK -> {
-                    if (Callbacks.notify(onLoginSuccess, "onLoginSuccess")) {
+                    if (Callbacks.notify(onLoginSuccess)) {
                         svConnection.setUsername(request.getBody());
+                    } else {
+                        System.err.println("onLoginSuccess not specified");
                     }
                 }
                 case ERROR -> displayErrorMessage(response);
