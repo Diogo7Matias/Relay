@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.google.gson.Gson;
@@ -13,61 +14,76 @@ import com.google.gson.GsonBuilder;
 import com.relay.protocol.Message;
 import com.relay.protocol.MessageAdapter;
 import com.relay.protocol.MessageType;
-import com.relay.server.ChatRoom;
-import com.relay.server.ChatServer;
+import com.relay.server.chatroom.ChatRoomService;
+import com.relay.server.chatroom.ChatRoomSessionManager;
+import com.relay.server.chatroom.domain.ChatRoom;
 import static com.relay.server.exceptions.ErrorMessage.MESSAGE_FORMAT_INVALID;
+import static com.relay.server.exceptions.ErrorMessage.USER_NOT_FOUND;
 import com.relay.server.exceptions.RelayException;
 import com.relay.server.net.state.ClientState;
 import com.relay.server.net.state.HandshakeState;
+import com.relay.server.user.UserService;
+import com.relay.server.user.domain.User;
 
-public class ClientHandler implements Runnable {
+/**
+ * Handles communication with a single client.
+ * 
+ * Receives messages from the client and processes them.
+ * Can also be used as a ClientConnection to send messages to the client.
+ */
+public class ClientHandler implements Runnable, ClientConnection {
     private final Socket socket;
-    private String username;
+    private final ChatRoomSessionManager sessionManager;
+    private final ChatRoomService chatRoomService;
+    private final UserService userService;
+    
+    private ClientState state;
+    private User user;
     
     private PrintWriter out;
-    private ClientState state;
     
-    private final ChatServer chatServer;
-    private ChatRoom room;
-    
-    /**
-     * An instance of Gson, used to serialize/deserialize messages.
-     */
+    // An instance of Gson, used to serialize/deserialize messages.
     private static final Gson gson = new GsonBuilder()
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
                                         .create();
 
-    public ClientHandler(Socket socket, ChatServer chatServer) {
-        this.chatServer = chatServer;
+    public ClientHandler(Socket socket, ChatRoomService roomService,
+            ChatRoomSessionManager sessionManager, UserService userService) {
         this.socket = socket;
+        this.sessionManager = sessionManager;
+        this.chatRoomService = roomService;
+        this.userService = userService;
         this.state = new HandshakeState();
     }
-
-    public String getUsername() {
-        return this.username;
-    }
     
-    public void setUsername(String username) {
-        chatServer.isNameUnique(username);
-        this.username = username;
+    private void setUser(String username) {
+        Optional<User> found = userService.findUser(username);
+        this.user = found.isPresent()
+            ? new User(found.get().getID(), username)
+            : new User(username);
     }
 
     public void setState(ClientState state) {
         this.state = state;
     }
 
-    public String getRoomID() {
-        return this.room.getID();
+    /**
+     * Sends a message to the client associated with this handler.
+     * 
+     * The message is converted to a string formatted as a JSON object
+     * and sent over to the client.
+     * 
+     * @param message the message to be sent
+     */
+    @Override
+    public void sendMessage(Message message) {
+        String json = gson.toJson(message);
+        this.out.println(json);
     }
 
-    public void setChatRoom(ChatRoom room) {
-        this.room = room;
-    }
-
-    public boolean hadRoom() {
-        return this.room != null;
-    }
-
+    /**
+     * Awaits client requests.
+     */
     @Override
     public void run() {
         try (
@@ -94,9 +110,7 @@ public class ClientHandler implements Runnable {
             System.err.println(e.getMessage());
         } finally {
             System.out.println("Client disconnected.");
-            if (room != null) {
-                room.removeHandler(this);
-            }
+            sessionManager.endConnection(this, this.user);
             close();
         }
     }
@@ -118,56 +132,51 @@ public class ClientHandler implements Runnable {
         state.handleMessage(this, message);
     }
 
-    /**
-     * Sends a message to the client associated with this handler.
-     * 
-     * The message is converted to a string formatted as a JSON object
-     * and sent over to the client.
-     * 
-     * @param message the message to be sent
-     */
-    public void sendMessage(Message message) {
-        String json = gson.toJson(message);
-        this.out.println(json);
-    }
+    /* -vvvvvv- Methods called by the state machine -vvvvvv- */
 
     public void processTextMessage(String messageBody) {
         Message message = Message.builder(MessageType.TEXT)
             .body(messageBody)
-            .sender(this.username)
+            .sender(this.user.getUsername())
             .timestamp(Instant.now())
             .build();
-        room.broadcast(message);
+        sessionManager.broadcast(this, message);
     }
 
     public void processUsernameRequest(UUID requestID, String username) {
+        userService.createUser(username);
+        setUser(username);
+        sessionManager.beginConnection(this, this.user);
+
         Message ack = Message.builder(MessageType.ACK)
             .requestID(requestID)
             .build();
-        setUsername(username);
         sendMessage(ack);
     }
 
-    public void processNewChatRequest(UUID requestID, String otherUser) {
-        ChatRoom newRoom = this.chatServer.newRoom(this, otherUser);
+    public void processNewChatRequest(UUID requestID, String otherUserName) {
+        User otherUser = userService.findUser(otherUserName).orElseThrow(() -> new RelayException(USER_NOT_FOUND));
+        ChatRoom newRoom = chatRoomService.createRoom(this.user, otherUser);
+        
         if (newRoom != null) {
             Message ack = Message.builder(MessageType.ACK)
                 .requestID(requestID)
-                .body(room.getID())
+                .body(newRoom.getID().toString())
                 .build();
             Message chatCreated = Message.builder(MessageType.CHAT_CREATED)
-                .body(room.getID())
+                .body(newRoom.getID().toString())
+                .sender(this.user.getUsername())
                 .build();
             sendMessage(ack);
-            newRoom.broadcastExcept(chatCreated, this);
+            sessionManager.sendToUser(otherUser, chatCreated);
         }
     }
 
-    public void processJoinChatRoom(UUID requestID, String roomID) {
-        this.chatServer.joinChatRoom(this, roomID);
+    public void processJoinChatRoom(UUID requestID, UUID roomID) {
+        sessionManager.join(this, chatRoomService.getRoom(roomID));
         Message ack = Message.builder(MessageType.ACK)
-            .requestID(requestID)
-            .build();
+                .requestID(requestID)
+                .build();
         sendMessage(ack);
     }
 }

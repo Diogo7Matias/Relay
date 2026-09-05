@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(255) PRIMARY KEY,
+    username VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS rooms (
+    id VARCHAR(255) PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id VARCHAR(255) PRIMARY KEY AUTOINCREMENT,
+    request_id VARCHAR(255),
+    body TEXT NOT NULL,
+    sender VARCHAR(255),
+    timestamp VARCHAR(255)
+);

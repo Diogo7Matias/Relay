@@ -1,5 +1,7 @@
 package com.relay.server.net.state;
 
+import java.util.UUID;
+
 import com.relay.protocol.Message;
 import static com.relay.server.exceptions.ErrorMessage.MESSAGE_BODY_MISSING;
 import com.relay.server.exceptions.RelayException;
@@ -20,7 +22,7 @@ public class ConnectedState implements ClientState {
                 if (message.getBody() == null || message.getBody().isBlank()) {
                     throw new RelayException(MESSAGE_BODY_MISSING);
                 }
-                handler.processJoinChatRoom(message.getRequestID(), message.getBody());
+                handler.processJoinChatRoom(message.getRequestID(), UUID.fromString(message.getBody()));
                 handler.setState(new ChatRoomState());
             }
             default -> System.err.println("Unhandled message type: " + message.getType());
