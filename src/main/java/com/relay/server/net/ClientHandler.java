@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +23,8 @@ import static com.relay.server.exceptions.ErrorMessage.USER_NOT_FOUND;
 import com.relay.server.exceptions.RelayException;
 import com.relay.server.net.state.ClientState;
 import com.relay.server.net.state.HandshakeState;
+import com.relay.server.textMessage.TextMessageService;
+import com.relay.server.textMessage.domain.TextMessage;
 import com.relay.server.user.UserService;
 import com.relay.server.user.domain.User;
 
@@ -35,6 +38,7 @@ public class ClientHandler implements Runnable, ClientConnection {
     private final Socket socket;
     private final ChatRoomSessionManager sessionManager;
     private final ChatRoomService chatRoomService;
+    private final TextMessageService messageService;
     private final UserService userService;
     
     private ClientState state;
@@ -47,12 +51,13 @@ public class ClientHandler implements Runnable, ClientConnection {
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
                                         .create();
 
-    public ClientHandler(Socket socket, ChatRoomService roomService,
-            ChatRoomSessionManager sessionManager, UserService userService) {
+    public ClientHandler(Socket socket, ChatRoomSessionManager sessionManager, ChatRoomService roomService, 
+            UserService userService, TextMessageService messageService) {
         this.socket = socket;
         this.sessionManager = sessionManager;
         this.chatRoomService = roomService;
         this.userService = userService;
+        this.messageService = messageService;
         this.state = new HandshakeState();
     }
     
@@ -135,6 +140,9 @@ public class ClientHandler implements Runnable, ClientConnection {
     /* -vvvvvv- Methods called by the state machine -vvvvvv- */
 
     public void processTextMessage(String messageBody) {
+        UUID roomID = sessionManager.getUserSessionRoom(this.user);
+        messageService.createMessage(roomID, messageBody, this.user.getID(), Instant.now());
+
         Message message = Message.builder(MessageType.TEXT)
             .body(messageBody)
             .sender(this.user.getUsername())
@@ -178,5 +186,16 @@ public class ClientHandler implements Runnable, ClientConnection {
                 .requestID(requestID)
                 .build();
         sendMessage(ack);
+        
+        // fetch all chat messages and send them to the client
+        List<TextMessage> textMessages = messageService.findAllChatRoomMessages(roomID);
+        textMessages.forEach(textMsg -> {
+            Message message = Message.builder(MessageType.TEXT)
+                    .body(textMsg.getBody())
+                    .sender(textMsg.getSenderID().toString())
+                    .timestamp(textMsg.getTimestamp())
+                    .build();
+            sendMessage(message);
+        });
     }
 }

@@ -10,6 +10,7 @@ import com.relay.server.chatroom.ChatRoomService;
 import com.relay.server.chatroom.ChatRoomSessionManager;
 import com.relay.server.chatroom.repository.RoomRepository;
 import com.relay.server.net.ClientHandler;
+import com.relay.server.textMessage.TextMessageService;
 import com.relay.server.textMessage.repository.TextMessageRepository;
 import com.relay.server.user.UserService;
 import com.relay.server.user.repository.UserRepository;
@@ -24,6 +25,7 @@ public class ChatServer {
 
     public static void main(String[] args) throws IOException, SQLException {
         ConcurrentHashMap<ClientHandler, Thread> handlers = new ConcurrentHashMap<>();
+        ChatRoomSessionManager sessionManager = new ChatRoomSessionManager();
         
         Database database = new Database("relay.db");
         RoomRepository roomRepository = new RoomRepository(database.getConnection());
@@ -32,8 +34,8 @@ public class ChatServer {
         
         ChatRoomService roomService = new ChatRoomService(roomRepository);
         UserService userService = new UserService(userRepository);
-        ChatRoomSessionManager sessionManager = new ChatRoomSessionManager();
-        
+        TextMessageService messageService = new TextMessageService(messageRepository);
+
         setCleanUpRoutine(handlers);
 
         // accept connections
@@ -45,7 +47,7 @@ public class ChatServer {
             // spawn a thread per client 
             while (clientCount < MAX_CLIENTS) {
                 Socket clientSocket = serverSocket.accept();
-                ClientHandler handler = new ClientHandler(clientSocket, roomService, sessionManager, userService);
+                ClientHandler handler = new ClientHandler(clientSocket, sessionManager, roomService, userService, messageService);
 
                 Thread thread = new Thread(handler);
                 thread.start();

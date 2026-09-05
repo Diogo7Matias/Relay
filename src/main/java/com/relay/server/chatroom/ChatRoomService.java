@@ -1,7 +1,9 @@
 package com.relay.server.chatroom;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.relay.server.chatroom.domain.ChatRoom;
 import com.relay.server.chatroom.repository.RoomRepository;
@@ -10,10 +12,11 @@ import com.relay.server.exceptions.RelayException;
 import com.relay.server.user.domain.User;
 
 /**
- * Responsible for managing chat rooms.
+ * Responsible for executing chat room related operations.
  */
 public class ChatRoomService {
     private final RoomRepository repository;
+    private final Map<UUID, ChatRoom> activeRooms = new ConcurrentHashMap<>();
 
     public ChatRoomService(RoomRepository repository) {
         this.repository = repository;
@@ -29,6 +32,7 @@ public class ChatRoomService {
         newRoom.addParticipant(otherUser);
 
         repository.save(newRoom);
+        activeRooms.put(newRoom.getID(), newRoom);
         return newRoom;
     }
 
@@ -37,6 +41,8 @@ public class ChatRoomService {
     }
 
     public ChatRoom getRoom(UUID roomID) {
-        return repository.findByID(roomID).orElseThrow(() -> new RelayException(CHAT_ROOM_NOT_FOUND));
+        return activeRooms.computeIfAbsent(roomID, id ->
+            repository.findByID(id).orElseThrow(() -> new RelayException(CHAT_ROOM_NOT_FOUND))
+        );
     }
 }

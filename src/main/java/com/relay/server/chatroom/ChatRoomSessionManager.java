@@ -48,6 +48,13 @@ public class ChatRoomSessionManager {
         }
     }
 
+    public UUID getUserSessionRoom(User user) {
+        ClientConnection connection = userConnections.get(user.getID());
+        return connection != null && connectionSessions.get(connection) != null 
+            ? connectionSessions.get(connection).getRoomID()
+            : null;
+    }
+
     public void sendToUser(User user, Message message) {
         ClientConnection connection = userConnections.get(user.getID());
         if (connection != null) {

@@ -7,10 +7,24 @@ CREATE TABLE IF NOT EXISTS rooms (
     id VARCHAR(255) PRIMARY KEY
 );
 
+CREATE TABLE IF NOT EXISTS room_users (
+    room_id VARCHAR(255) NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY (room_id, user_id),
+
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
 CREATE TABLE IF NOT EXISTS messages (
-    id VARCHAR(255) PRIMARY KEY AUTOINCREMENT,
-    request_id VARCHAR(255),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room_id VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
-    sender VARCHAR(255),
-    timestamp VARCHAR(255)
+    sender VARCHAR(255) NOT NULL,
+    timestamp VARCHAR(255) NOT NULL,
+
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender) REFERENCES users(id)
 );

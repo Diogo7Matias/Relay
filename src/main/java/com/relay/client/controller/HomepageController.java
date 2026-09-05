@@ -116,9 +116,8 @@ public class HomepageController implements ViewController {
             Node chatView = loader.load();
             ChatController controller = loader.getController();
 
-            controller.setServerConnection(svConnection);
             svConnection.setOnMessageReceived(msg -> Platform.runLater(() -> controller.updateChatHistory(msg)));
-            svConnection.loadChatHistory(chatID);
+            controller.setServerConnection(svConnection);
 
             borderPane.setCenter(chatView);
         } catch (IOException e) {

@@ -117,10 +117,6 @@ public class ServerConnection implements Runnable {
         }
     }
 
-    public void loadChatHistory(String chatID) {
-        // TODO: fetch from server
-    }
-
     /**
      * Sends a text message to the server.
      * This message is not a request so it will not wait for a response.
