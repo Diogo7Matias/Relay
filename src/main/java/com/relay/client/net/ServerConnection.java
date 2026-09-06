@@ -37,6 +37,7 @@ public class ServerConnection implements Runnable {
 
     private final Map<UUID, Consumer<Message>> pendingRequests = new ConcurrentHashMap<>();
     private final Queue<Message> bufferedMessages = new ConcurrentLinkedQueue<>();
+    private final Queue<ChatSummary> bufferedChats = new ConcurrentLinkedQueue<>();
 
     private String username;
 
@@ -62,6 +63,10 @@ public class ServerConnection implements Runnable {
     
     public void setOnChatCreated(Consumer<ChatSummary> handler) {
         this.onChatCreated = handler;
+        ChatSummary queued;
+        while ((queued = bufferedChats.poll()) != null) {
+            handler.accept(queued);
+        }
     }
 
     /**
@@ -197,7 +202,7 @@ public class ServerConnection implements Runnable {
 
     public void notifyChatCreated(ChatSummary chatSummary) {
         if (!Callbacks.notify(onChatCreated, chatSummary)) {
-            System.err.println("onChatCreated not specified");
+            bufferedChats.add(chatSummary);
         }
     }
 }

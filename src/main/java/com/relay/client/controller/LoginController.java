@@ -45,7 +45,7 @@ public class LoginController implements ViewController {
         if (username == null || username.isBlank()) return;
         
         Message request = Message.builder(MessageType.NAME_REQUEST).body(username).build();
-        svConnection.sendRequest(request, response -> Platform.runLater(() -> {
+        svConnection.sendRequest(request, response -> {
             switch (response.getType()) {
                 case ACK -> {
                     if (Callbacks.notify(onLoginSuccess)) {
@@ -54,10 +54,10 @@ public class LoginController implements ViewController {
                         System.err.println("onLoginSuccess not specified");
                     }
                 }
-                case ERROR -> displayErrorMessage(response);
+                case ERROR -> Platform.runLater(() -> displayErrorMessage(response));
                 default -> System.err.println("Ignoring message, still in handshake: " + response.getType());
             }
-        }));
+        });
     }
 
     public void displayErrorMessage(Message message) {

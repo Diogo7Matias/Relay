@@ -1,5 +1,6 @@
 package com.relay.server.chatroom;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,13 +32,24 @@ public class ChatRoomService {
         newRoom.addParticipant(user);
         newRoom.addParticipant(otherUser);
 
-        repository.save(newRoom);
+        repository.save(newRoom, user, otherUser);
         activeRooms.put(newRoom.getID(), newRoom);
         return newRoom;
     }
 
     public List<ChatRoom> getAllChatRooms() {
         return repository.findAll();
+    }
+
+    public List<ChatRoom> getChatRoomsOfUser(UUID userID) {
+        List<ChatRoom> persistedRooms = repository.findAllByUserID(userID);
+        List<ChatRoom> result = new ArrayList<>();
+
+        for (ChatRoom room : persistedRooms) {
+            ChatRoom liveRoom = activeRooms.computeIfAbsent(room.getID(), id -> room);
+            result.add(liveRoom);
+        }
+        return result;
     }
 
     public ChatRoom getRoom(UUID roomID) {

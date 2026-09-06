@@ -26,7 +26,9 @@ public class ChatRoomSessionManager {
         if (session != null) {
             session.remove(connection);
         }
-        userConnections.remove(user.getID());
+        if (user != null) {
+            userConnections.remove(user.getID());
+        }
     }
 
     public void join(ClientConnection connection, ChatRoom room) {

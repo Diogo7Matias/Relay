@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.google.gson.Gson;
@@ -61,11 +60,8 @@ public class ClientHandler implements Runnable, ClientConnection {
         this.state = new HandshakeState();
     }
     
-    private void setUser(String username) {
-        Optional<User> found = userService.findUser(username);
-        this.user = found.isPresent()
-            ? new User(found.get().getID(), username)
-            : new User(username);
+    private void setUser(User user) {
+        this.user = user;
     }
 
     public void setState(ClientState state) {
@@ -152,14 +148,31 @@ public class ClientHandler implements Runnable, ClientConnection {
     }
 
     public void processUsernameRequest(UUID requestID, String username) {
-        userService.createUser(username);
-        setUser(username);
+        User user = userService.findUser(username)
+            .orElseGet(() -> userService.createUser(username));
+        setUser(user);
+        
         sessionManager.beginConnection(this, this.user);
 
         Message ack = Message.builder(MessageType.ACK)
             .requestID(requestID)
             .build();
         sendMessage(ack);
+
+        // fetch all chat rooms involving this client and send them to the client
+        List<ChatRoom> chatRooms = chatRoomService.getChatRoomsOfUser(this.user.getID());
+        chatRooms.forEach(room -> {
+            List<User> participants = room.getParticipants();
+            // assuming chat rooms have 2 participants only
+            String otherUsername = participants.get(0).getUsername().equals(this.user.getUsername())
+                ? participants.get(1).getUsername()
+                : participants.get(0).getUsername();
+            Message message = Message.builder(MessageType.CHAT_CREATED)
+                .body(room.getID().toString())
+                .sender(otherUsername)
+                .build();
+            sendMessage(message);
+        });
     }
 
     public void processNewChatRequest(UUID requestID, String otherUserName) {
