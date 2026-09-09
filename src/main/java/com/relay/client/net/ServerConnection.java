@@ -4,7 +4,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
@@ -20,9 +26,9 @@ import com.relay.protocol.Message;
 import com.relay.protocol.MessageAdapter;
 import com.relay.protocol.MessageType;
 
+import javafx.util.Pair;
+
 public class ServerConnection implements Runnable {
-    private static final String HOST = "localhost";
-    private static final int PORT = 5000;
     private static final Gson gson = new GsonBuilder()
                                         .registerTypeAdapter(Message.class, new MessageAdapter())
                                         .create();
@@ -102,7 +108,8 @@ public class ServerConnection implements Runnable {
      */
     public boolean connect() {
         try {
-            socket = new Socket(HOST, PORT);
+            Pair<String, Integer> hostInfo = broadcastDiscovery();
+            socket = new Socket(hostInfo.getKey(), hostInfo.getValue());
             serverIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             serverOut = new PrintWriter(socket.getOutputStream(), true);
             notifyServerStatusChange(true);
@@ -112,6 +119,33 @@ public class ServerConnection implements Runnable {
             notifyServerStatusChange(false);
             closeConnection();
             return false;
+        }
+    }
+
+    private Pair<String, Integer> broadcastDiscovery() throws IOException, SocketException {
+        final int UDP_PORT = 5000;
+        try (DatagramSocket dSocket = new DatagramSocket()) {
+            dSocket.setBroadcast(true);
+            dSocket.setSoTimeout(3000);
+            InetAddress broadcastAddr = InetAddress.ofLiteral("255.255.255.255");
+            
+            // broadcast discovery request
+            Message broadcastMsg = Message.builder(MessageType.DISCOVERY_REQUEST).build();
+            byte buf[] = gson.toJson(broadcastMsg).getBytes();
+            dSocket.send(new DatagramPacket(buf, buf.length, broadcastAddr, UDP_PORT));
+            
+            // await response from server and handle it
+            byte receiveBuf[] = new byte[65535];
+            DatagramPacket rcvdPacket = new DatagramPacket(receiveBuf, receiveBuf.length);
+            dSocket.receive(rcvdPacket);
+            String messageStr = new String(receiveBuf, 0, rcvdPacket.getLength(), StandardCharsets.UTF_8);
+            Message response = gson.fromJson(messageStr, Message.class);
+            
+            String address = rcvdPacket.getAddress().getHostAddress();
+            int tcpPort = Integer.parseInt(response.getBody());
+            return new Pair<>(address, tcpPort);
+        } catch (SocketTimeoutException e) {
+            throw new IOException("Discovery timed out. No server found.");
         }
     }
     
