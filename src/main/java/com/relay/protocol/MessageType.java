@@ -3,7 +3,7 @@ package com.relay.protocol;
 /**
  * Represents a type of message.
  * 
- * Client-only message types: {@code NAME_REQUEST}, {@code NEW_CHAT_REQUEST}, {@code JOIN_CHAT_REQUEST}. <br>
+ * Client-only message types: {@code NAME_REQUEST}, {@code NEW_CHAT_REQUEST}, {@code JOIN_CHAT_REQUEST}. {@code DISCOVERY_REQUEST}<br>
  * Server-only message types: {@code ACK}, {@code ERROR}, {@code CHAT_CREATED}. <br>
  * Shared message types: {@code TEXT}.
  */
@@ -34,6 +34,11 @@ public enum MessageType {
      * a chat room involving them was created.
      */
     CHAT_CREATED,
+
+    /**
+     * A type of message sent by a client trying to discover the server's address.
+     */
+    DISCOVERY_REQUEST,
 
     /**
      * A type of message sent by a client requesting a username.

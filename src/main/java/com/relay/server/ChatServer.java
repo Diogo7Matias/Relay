@@ -10,6 +10,7 @@ import com.relay.server.chatroom.ChatRoomService;
 import com.relay.server.chatroom.ChatRoomSessionManager;
 import com.relay.server.chatroom.repository.RoomRepository;
 import com.relay.server.net.ClientHandler;
+import com.relay.server.net.DiscoveryHandler;
 import com.relay.server.textMessage.TextMessageService;
 import com.relay.server.textMessage.repository.TextMessageRepository;
 import com.relay.server.user.UserService;
@@ -36,7 +37,12 @@ public class ChatServer {
         UserService userService = new UserService(userRepository);
         TextMessageService messageService = new TextMessageService(messageRepository);
 
-        setCleanUpRoutine(handlers);
+        // accept UDP packets to discover the server's IP address
+        DiscoveryHandler discoveryHandler = new DiscoveryHandler();
+        Thread discoveryThread = new Thread(discoveryHandler);
+        discoveryThread.start();
+
+        setCleanUpRoutine(handlers, discoveryThread);
 
         // accept connections
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {            
@@ -61,12 +67,20 @@ public class ChatServer {
         }
     }
 
-    private static void setCleanUpRoutine(ConcurrentHashMap<ClientHandler, Thread> handlers) {
+    private static void setCleanUpRoutine(ConcurrentHashMap<ClientHandler, Thread> handlers, Thread discoveryThread) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             for (ClientHandler handler : handlers.keySet()) {
                 handler.close();
             }
 
+            // stop discovery thread
+            try {
+                discoveryThread.join(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            // stop client threads
             for (Thread thread : handlers.values()) {
                 try {
                     thread.join(2000);
