@@ -11,6 +11,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class MessageCell extends ListCell<Message> {
+    private final String currentUsername;
+
+    public MessageCell(String currentUsername) {
+        this.currentUsername = currentUsername;
+    }
+
     @Override
     protected void updateItem(Message message, boolean empty) {
         super.updateItem(message, empty);
@@ -33,8 +39,9 @@ public class MessageCell extends ListCell<Message> {
         body.setWrapText(true);
         container.prefWidthProperty().bind(this.widthProperty().subtract(20));
         
+        boolean isOwnMessage = currentUsername != null && message.getSender().equals(currentUsername);
+        usernameLabel.getStyleClass().add(isOwnMessage ? "message-header-username-own" : "message-header-username");
         header.getStyleClass().add("message-header");
-        usernameLabel.getStyleClass().add("message-header-username");
         timestampLabel.getStyleClass().add("message-header-timestamp");
         body.getStyleClass().add("message-body");
         container.getStyleClass().add("message-container");

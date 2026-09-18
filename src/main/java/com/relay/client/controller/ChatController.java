@@ -36,7 +36,7 @@ public class ChatController implements ViewController {
 
     @FXML
     private void initialize() {
-        historyList.setCellFactory(listView -> new MessageCell());
+        historyList.setCellFactory(listView -> new MessageCell(svConnection.getUsername()));
         historyList.getItems().addListener((ListChangeListener<Message>) change -> {
             Platform.runLater(() -> {
                 historyList.scrollTo(historyList.getItems().size() - 1);

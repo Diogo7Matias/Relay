@@ -156,6 +156,12 @@
 }
 
 .message-header-username {
+    -fx-text-fill: -text-color;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.message-header-username-own {
     -fx-text-fill: -highlight-color;
     -fx-font-size: 18px;
     -fx-font-weight: bold;
